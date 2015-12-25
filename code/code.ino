@@ -642,39 +642,17 @@ void churn() {
         updatePrimary(color(1,90,255)); // water color
         // updatePrimary(color(255,0,0)); // red color
         // updatePrimary(color(255,255,0)); // yellow color
-        break;
-      // case 2:
-      //   will_transition = 1;
-      //   // flavorFill()
-      //   effect_id = 1;
-      //   intervalCount = 20;
-      //   itermax = panelsTotal;
-      //   // updatePrimary(color(1,0,255));
-      //   // updatePrimary(color(0,255,1)); // hop color
-      //   updatePrimary(color(255,90,0)); // wheat color
-      //   break;    
-      // case 3:
-      //   will_transition = 1;
-      //   // flavorFill()
-      //   effect_id = 1;
-      //   intervalCount = 20;
-      //   itermax = panelsTotal;
-      //   updatePrimary();
-      //   // updatePrimary(color(0,255,1)); // hop color
-      //   // updatePrimary(color(255,90,0)); // wheat color
-      //   break;      
+        break;    
       case 2:
         will_transition = 1;
-        // flavorFill()
+        // flavorFill() polkadots
         effect_id = 1;
         intervalCount = 20;
         itermax = panelsTotal;
       
         polkadots = 1;
         updatePrimary();
-        updateSecondary();        
-        // updatePrimary();
-        // updateSecondary();
+        updateSecondary();                
         break;        
       case 3:
         // rainbow()
@@ -682,8 +660,7 @@ void churn() {
         effectMS = 400; /// this is set low for panels...
         intervalCount = 6;
         itermax = 255;
-        will_transition = 1;
-        // iter=100; // start at a different color than green /// Doesnt seem to work
+        will_transition = 1;        
         break;
       case 4:
         // rainbowCycle()
@@ -1025,7 +1002,7 @@ void resetMessageBuffer(){
 
 void statusUpdate() {
   // Serial.print(F("Is Dave there?"));
-  Serial.println(F("<=== Creamery Status Update ===>")); 
+  Serial.println(F("<=== Status Update ===>")); 
   Serial.print(F("Selector: "));
   Serial.println(selector); 
   Serial.print(F("Interval: "));
