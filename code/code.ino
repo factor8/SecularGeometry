@@ -15,6 +15,8 @@
 #define pixelsY 3
 #define pixelsTotal 20
 #define panelsCount 20
+boolean autoPilot = true;
+long effect_duration = 300000;
 
 // Instantiate Controller. Num Pix Automatically Generated.
 // Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
@@ -73,8 +75,7 @@ short transition_steps;
 long 
   now,
   then,
-  effect_start_time,
-  effect_duration;
+  effect_start_time;
 
 uint16_t /// set defaults
   iter,
@@ -113,7 +114,6 @@ uint8_t  readMode = 0;      // Wait
 // Touch Vars
 boolean touching = false;
 boolean overtimeTouch = false;
-boolean autoPilot = true; /// Move setting this to a better place.
 long firstTouch,touchDuration,lastTouchAction;
 
 
@@ -360,10 +360,9 @@ void sparkle(){
 }
 
 void candleFlame() {
-  if (DEBUG && first_run) {Serial.println(F("Beginning effect: candleFlame"));first_run=0;}  
-  // Color can be chosen by primary. We recommend: #
+  if (DEBUG && first_run) {Serial.println(F("Beginning effect: candleFlame"));first_run=0;}    
 
-  int intensity = random(220, 255);         
+  int intensity = random(210, 255);
   
   for (int i=0; i < panelsTotal; i++) {
     
@@ -629,8 +628,8 @@ void churn() {
         updatePrimary(color(0,0,0));
         // updatePrimary(RandomWheel());
         will_transition = 1;
-        break;      
-      case 8:
+        break;          
+      case 1:
         will_transition = 1;
         // flavorFill() 
         effect_id = 1;
@@ -643,7 +642,6 @@ void churn() {
         updatePrimary(color(1,90,255)); // water color
         // updatePrimary(color(255,0,0)); // red color
         // updatePrimary(color(255,255,0)); // yellow color
-        effect_duration = 300000;
         break;
       // case 2:
       //   will_transition = 1;
@@ -725,13 +723,13 @@ void churn() {
         intervalCount = 20;
         itermax = 100;    
         break;
-      case 1:
+      case 8:
         // colorCycleFade()
         effect_id = 8;
         // iter = 100; // Start on a different color than green
-        // will_transition = 0;
+        will_transition = 1;
         intervalCount = 20;
-        effectMS = 50;
+        effectMS = 60;
         itermax = 255;      
         break;          
            
@@ -935,7 +933,7 @@ void interceptSerial(char x) {
   
   if        ( x == '!' )    {   readMode  = 1;    }         //Set Selector
   else if   ( x == '@' )    {   readMode  = 2;    }         //Set Frequency
-  else if   ( x == '#' )    {   readMode  = 3;    }         //Set 
+  else if   ( x == '#' )    {   readMode  = 3;    }         //Set Brightness
   else if   ( x == '+' )    {   readMode  = 4;    }         //Shift Register IDs, separated by comma (no whitespace)
   else if   ( x == '-' )    {   readMode  = 5;    }         //Shift Register IDs, separated by comma (no whitespace)
   else if   ( x == '~' )    {   readMode  = 6;    }         //System Mode 
