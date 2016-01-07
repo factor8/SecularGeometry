@@ -1,10 +1,10 @@
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
-#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_NeoPixel.h>
 // #include <TrueRandom.h>
 
-// #define DATAPIN   2 // Data pin for serial communication to shift registers
-#define DATAPIN   6 // NEOPIXEL mandatory data pin for serial communication to shift registers
+#define DATAPIN   2 // Data pin for serial communication to shift registers
+// #define DATAPIN   6 // NEOPIXEL mandatory data pin for serial communication to shift registers
 #define CLOCKPIN  3 // Clock pin for serial communication to shift registers
 #define TOUCHPIN  5 // Touch sensitive switch
 
@@ -13,14 +13,14 @@
 #define panelsY 1
 #define pixelsX 5
 #define pixelsY 3
-#define pixelsTotal 20
+#define pixelsTotal 32
 #define panelsCount 20
 boolean autoPilot = true;
 long effect_duration = 300000;
 
 // Instantiate Controller. Num Pix Automatically Generated.
-// Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
-Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
+Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
+// Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
 
 // Buckyball
 byte panels[panelsCount][10] = { {0,1,2,3,4,0,0,0,0,0}, {5,6,7,8,9,10,11,12,13,14}, {15,16,17,18,19,20,21,22,23,24}, 
@@ -366,7 +366,7 @@ void candleFlame() {
   
   for (int i=0; i < panelsTotal; i++) {
     
-    q(i,color(intensity,(intensity*50)/100,0));
+    q(i,color(intensity,(intensity*30)/100,0));
 
   }
 }
