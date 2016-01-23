@@ -1,16 +1,28 @@
-#define TEST 1
-#if (TEST)
-  #include <Adafruit_NeoPixel.h>
-  #define DATAPIN   6 // NEOPIXEL mandatory data pin for serial communication to shift registers
-#elif
-  #include <SPI.h>
-  #include <Adafruit_WS2801.h>
-  #define DATAPIN   2 // Data pin for serial communication to shift registers
-  #define CLOCKPIN  3 // Clock pin for serial communication to shift registers
-#endif
-#include <TrueRandom.h>
+#include <SPI.h>
+#include <Adafruit_WS2801.h>
+#define DATAPIN   13 // Data pin for serial communication to shift registers
+#define CLOCKPIN  14 // Clock pin for serial communication to shift registers
+#define TOUCHPIN  2 // Touch sensitive switch
 
-#define TOUCHPIN  5 // Touch sensitive switch
+// #define TEST 2
+// #if (TEST)
+//   #include <Adafruit_NeoPixel.h>
+//   #define DATAPIN   6 // NEOPIXEL mandatory data pin for serial communication to shift registers
+//   #define TOUCHPIN  5 // Touch sensitive switch
+// #elif (TEST == 2)
+//   #include <SPI.h>
+//   #include <Adafruit_WS2801.h>
+//   #define DATAPIN   13 // Data pin for serial communication to shift registers
+//   #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
+//   #define TOUCHPIN  2 // Touch sensitive switch
+// #else 
+//   #include <SPI.h>
+//   #include <Adafruit_WS2801.h>
+//   #define DATAPIN   2 // Data pin for serial communication to shift registers
+//   #define CLOCKPIN  3 // Clock pin for serial communication to shift registers
+//   #define TOUCHPIN  5 // Touch sensitive switch
+// #endif
+// // #include <TrueRandom.h>
 
 // Grid DEF & Vars
 #define panelsX 1
@@ -23,8 +35,8 @@ boolean autoPilot = true;
 long effect_duration = 300000;
 
 // Instantiate Controller. Num Pix Automatically Generated.
-// Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
-Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
+Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
+// Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
 
 // Buckyball
 byte panels[panelsCount][10] = { {0,1,2,3,4,0,0,0,0,0}, {5,6,7,8,9,10,11,12,13,14}, {15,16,17,18,19,20,21,22,23,24}, 
@@ -60,8 +72,8 @@ uint16_t active[pixelsTotal]; // Right now this is just for active sparkle pixel
 uint16_t active_count = 0;
 
 // Serial Vars
-extern boolean DEBUG = 0; // Flag for debugging.
-extern boolean verbose = 0; // Flag for verbose debugging.
+boolean DEBUG = 0; // Flag for debugging.
+boolean verbose = 0; // Flag for verbose debugging.
 
 // Transition Vars
 boolean will_transition = 1;
@@ -450,7 +462,7 @@ void loop() {
     interceptSerial(x);
   }
 
-  interceptTouch(); // Listen for touch
+  // interceptTouch(); // Listen for touch
 
 } 
 
@@ -1069,9 +1081,9 @@ void toggleVerbose() {if (verbose){verbose = 0;} else {verbose=1;}}
 //  #include "pins_arduino.h" // Arduino pre-1.0 needs this
 uint8_t readCapacitivePin(int pinToMeasure) {
   // Variables used to translate from Arduino to AVR pin naming
-  volatile uint8_t* port;
-  volatile uint8_t* ddr;
-  volatile uint8_t* pin;
+  volatile uint32_t* port;
+  volatile uint32_t* ddr;
+  volatile uint32_t* pin;
   // Here we translate the input pin number from
   //  Arduino pin number to the AVR PORT, PIN, DDR,
   //  and which bit of those registers we care about.
@@ -1266,8 +1278,6 @@ uint32_t Wheel(byte WheelPos, double alpha) {
 
 // Free Ram Output via Adafruit ///Move this into a testing utilities library.
 int freeRam () 
-{
-  extern int __heap_start, *__brkval; 
-  int v; 
-  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+{ 
+  // return getFreeHeap();
 }
