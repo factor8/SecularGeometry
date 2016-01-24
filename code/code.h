@@ -109,4 +109,14 @@ uint8_t extractBlue(uint32_t c);
 uint32_t Wheel(byte WheelPos);
 // This is Wheel with alpha.
 uint32_t Wheel(byte WheelPos, double alpha);
+
+// -- Wifi // File System Functions
+String formatBytes(size_t bytes);
+String getContentType(String filename);
+bool handleFileRead(String path);
+void handleFileUpload();
+void handleFileDelete();
+void handleFileCreate();
+void handleFileList();
+
 int freeRam (); 
