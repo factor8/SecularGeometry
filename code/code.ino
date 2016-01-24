@@ -3,12 +3,24 @@
 // www.seculargeometry.com
 // Idea Fab Labs, Chico // Santa Cruz
 
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+// #include <FS.h>
+
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
 #include "code.h"
 #define DATAPIN   13 // Data pin for serial communication to shift registers
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
 #define TOUCHPIN  2 // Touch sensitive switch
+
+const char* ssid = "LEDpaint";
+const char* password = "betafish";
+const char* host = "seculargeometry";
+
+ESP8266WebServer server(80);
 
 // #define TEST 2
 // #if (TEST)
@@ -402,6 +414,18 @@ uint8_t menu_count = 15; /// fix this to adjust the number of effects.
 void setup()
 {
   Serial.begin(9600);
+
+
+  if (String(WiFi.SSID()) != String(ssid)) {
+    WiFi.begin(ssid, password);
+  }
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  MDNS.begin(host);
 
   updatePrimary(color(159,0,255));
   secondary = color(255,255,255);
