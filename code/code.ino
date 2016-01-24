@@ -174,6 +174,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             // analogWrite(LED_GREEN,  ((rgb >> 8) & 0xFF));
             // analogWrite(LED_BLUE,   ((rgb >> 0) & 0xFF));
         }
+        if(payload[0] == '!') {
+
+          /// not optimized... char to int is what we need
+          uint8_t s = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
+
+          Serial.println(s);
+          setSelector(s);
+        }        
 
         break;
   }
