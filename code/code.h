@@ -3,30 +3,30 @@
 // www.seculargeometry.com
 // Idea Fab Labs, Chico // Santa Cruz
 
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <WebSocketsServer.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <FS.h>
+#include <Hash.h>
+#include <SPI.h>
+#include <Adafruit_WS2801.h>
+
 void q(uint16_t pos, uint32_t c);
 
 // fill the dots one after the other with said color
 // good for testing purposes
 void flavorWipe();
-
 void fadeOut();
-
-// Just fill the strand with a color
 void flavorFill();
-
 void rainbow();
-
 void rainbowCycle();
-
-// Moves colors along the strand. Frequency of 200 or lower is a nice pace. Should be rapid and exciting
 void colorCycle();
-
 void colorFade();
-
 void colorCycleFade();
-
 void sparkle();
-
 void candleFlame();
 
 /* -- LOAD UP OUR EFFECTS -- */
@@ -34,7 +34,6 @@ void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycl
 
 // #setup
 void setup();
-
 void loop();
 
 void interceptTouch();
@@ -46,7 +45,6 @@ void updateMode();
 void updateSelector();
 void churn();
 void pour();
-// Serial Functions
 void interceptSerial(char x);
 
 void sSetSelector();
@@ -118,5 +116,5 @@ void handleFileUpload();
 void handleFileDelete();
 void handleFileCreate();
 void handleFileList();
-
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 int freeRam (); 

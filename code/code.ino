@@ -3,14 +3,6 @@
 // www.seculargeometry.com
 // Idea Fab Labs, Chico // Santa Cruz
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <FS.h>
-
-#include <SPI.h>
-#include <Adafruit_WS2801.h>
 #include "code.h"
 #define DATAPIN   13 // Data pin for serial communication to shift registers
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
@@ -21,6 +13,7 @@ const char* password = "betafish";
 const char* host = "sg-lantern";
 
 ESP8266WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 //holds the current upload
 File fsUploadFile;
@@ -67,7 +60,6 @@ byte panels[panelsCount][10] = { {0,1,2,3,4,0,0,0,0,0}, {5,6,7,8,9,10,11,12,13,1
 // byte panels[8][pixelsX] = { {0,8,16,24,32},{1,9,17,25,33},{2,10,18,26,34},{3,11,19,27,35},
                      // {4,12,20,28,36},{5,13,21,29,37},
                      // {6,14,22,30,38},{7,15,23,31,39}};
-
 
 // For the next buckyball
 // byte panels[6][10] = { {0,0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0,0}, 
@@ -152,6 +144,41 @@ uint8_t  readMode = 0;      // Wait
 boolean touching = false;
 boolean overtimeTouch = false;
 long firstTouch,touchDuration,lastTouchAction;
+
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+  switch(type) {
+    case WStype_DISCONNECTED:
+        Serial.printf("[%u] Disconnected!\n", num);
+        break;
+    case WStype_CONNECTED: {
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+
+        // send message to client
+        webSocket.sendTXT(num, "Connected");
+    }
+        break;
+    case WStype_TEXT:
+        Serial.printf("[%u] get Text: %s\n", num, payload);        
+
+        if(payload[0] == '0') {
+            flash();
+            // we get RGB data
+
+            // // decode rgb data
+            // uint32_t rgb = (uint32_t) strtol((const char *) &payload[1], NULL, 16);
+
+            // analogWrite(LED_RED,    ((rgb >> 16) & 0xFF));
+            // analogWrite(LED_GREEN,  ((rgb >> 8) & 0xFF));
+            // analogWrite(LED_BLUE,   ((rgb >> 0) & 0xFF));
+        }
+
+        break;
+  }
+
+}
 
 
 /// at some point we may need to create a function that returns pixelsTotal based on mode (panel/mirror/etc) 
@@ -452,6 +479,9 @@ void setup()
   Serial.print(host);
   Serial.println(".local/edit to see the file browser");
   
+  // start webSocket server
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
   
   //SERVER INIT
   //list directory
@@ -558,6 +588,7 @@ void loop() {
   // interceptTouch(); // Listen for touch
 
   server.handleClient();
+  webSocket.loop();
 } 
 
 void interceptTouch() {
