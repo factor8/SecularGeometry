@@ -1,5 +1,11 @@
+// Secular Geometry Lantern Code
+// By Jordan Layman 2016
+// www.seculargeometry.com
+// Idea Fab Labs, Chico // Santa Cruz
+
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
+#include "code.h"
 #define DATAPIN   13 // Data pin for serial communication to shift registers
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
 #define TOUCHPIN  2 // Touch sensitive switch
@@ -388,7 +394,7 @@ void candleFlame() {
 }
 
 /* -- LOAD UP OUR EFFECTS -- */
-void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade,candleFlame};
+// void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade,candleFlame};
 
 uint8_t menu_count = 15; /// fix this to adjust the number of effects.
 
