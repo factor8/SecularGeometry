@@ -162,19 +162,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     }
         break;
     case WStype_TEXT:
-        Serial.printf("[%u] get Text: %s\n", num, payload);        
+        Serial.printf("[%u] get Text: %s\n", num, payload);
 
-        if(payload[0] == '0') {
-            flash();
-            // we get RGB data
-
-            // // decode rgb data
-            // uint32_t rgb = (uint32_t) strtol((const char *) &payload[1], NULL, 16);
-
-            // analogWrite(LED_RED,    ((rgb >> 16) & 0xFF));
-            // analogWrite(LED_GREEN,  ((rgb >> 8) & 0xFF));
-            // analogWrite(LED_BLUE,   ((rgb >> 0) & 0xFF));
-        }
+        if(payload[0] == '0') {flash();}
+        if(payload[0] == '1') {webSocket.sendTXT(num,"1");}
         if(payload[0] == '!') {
 
           /// not optimized... char to int is what we need
@@ -182,6 +173,22 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
           Serial.println(s);
           setSelector(s);
+        }
+        if(payload[0] == '#') {
+            
+          // String br = (const char *) &payload;
+          // Serial.println(br);
+
+          Serial.printf("[%u] Brightness: %s\n", num, payload);
+          // /// not optimized... char to int is what we need
+          // br = br.substring(1);
+
+          // uint8_t b = (uint8_t) strtol((const char *) br, NULL, 10);
+          // // String br = String((const char *) &payload).substring(1);
+          // // uint8_t b;  
+
+          // setBrightness(b);
+          webSocket.sendTXT(num, "Brightness set to "+String(brightness));
         }
         
         if(payload[0] == 'G') {     
@@ -644,7 +651,7 @@ void interceptTouch() {
         // }
             
         // Change mode.
-        future_selector = selector+1; /// messy
+        advanceSelector();
 
         if (DEBUG) Serial.print(F("User activated mode change."));
 
@@ -693,7 +700,6 @@ void interceptTouch() {
     }
   }
 }
-
 // Just flash black for a short bit.
 void flash() {
   for(int i=0; i<pixelsTotal; i++){
@@ -754,6 +760,9 @@ void updateSelector() {
     }   
 
     effect_start_time = now;
+}
+void advanceSelector(){
+  future_selector = selector+1;
 }
 
 void churn() {

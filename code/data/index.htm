@@ -15,10 +15,7 @@
 		}
 		.wrap {
 			width:;
-		}
-		.flash {
-			
-		}
+		}		
 		.button {
 			color:black;
 			background: white;
@@ -28,60 +25,78 @@
 			margin: 2em;
 			padding:2em;
 			cursor:pointer;
+			border-radius: 4px;
+		}
+		#connectLight {
+			width:1em;
+			height:1em;
+			display: block;
+			border-radius: 50%;	
+		}
+		.connected {
+			background: green;
+
+		}
+		.not-connected {
+			background:red;
 		}
 	</style>
 	<script>
-		var debug;
-		var connection;
-		var connected = 0;
-		
+		var debug,connectionIndicator;
+		var connection,waiting;
+		var connected = 0;		
+
 		function init() {
 		    debug = document.getElementById("debug");
+		    connectionIndicator = document.getElementById("connectLight");
 		    // var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-			connect();			
-		}
+			connect();	
 
-		function testWebSocket() {
-		    websocket = new WebSocket(wsUri);
-		    websocket.onopen = function(evt) { onOpen(evt) };
-		    websocket.onclose = function(evt) { onClose(evt) };
-		    websocket.onmessage = function(evt) { onMessage(evt) };
-		    websocket.onerror = function(evt) { onError(evt) };
-		  }
+			// Setup our ping.			
+			window.setTimeout(function(){window.setInterval(function(){checkConnection();},5000);},6000);
+		}
+		function writeToScreen(message) {
+			var pre = document.createElement("p");
+			pre.style.wordWrap = "break-word";
+			pre.innerHTML = message;
+			debug.appendChild(pre);
+		} 
 
 		function connect() {
 			
 			console.log("Connecting...");
 			connection = new WebSocket('ws://sg-lantern.local:81/', ['arduino']);		   
-	    	connection.onopen = function () {  connection.send('Connected ' + new Date());connected=1; }; 
+	    	connection.onopen = function () {  connection.send('Connected ' + new Date()); connected=1;checkConnection(); }; 
 	    	connection.onclose = function(evt) { console.log('Socket closed'); connected=0; };
-			connection.onerror = function (error) { console.log('Socket Error: ', error);};
-			connection.onmessage = function (e) { console.log('Server: ', e.data);};
-
+			connection.onerror = function (error) { console.log('Socket Error: ', error); connected=0;};
+			connection.onmessage = function (e) { 
+				console.log('Server: ', e.data);
+				if (e.data == 1) {
+					waiting=0;
+					connected == 1;					
+					// showConnection();
+				}
+			};
 		}
 		// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
 		function checkConnection() {
-
+			waiting = 1;
+			connection.send(1);			
+			window.setTimeout(function(){showConnection()},1000);
 		}
-		
+		function showConnection() {			
+			if (!waiting) {
+				connectionIndicator.className = 'connected';
+			} else {
+				connectionIndicator.className = 'not-connected';
+			}
+		}
 		function flash() {  
 			if (!connected)connect();
-			
-			
-			// var g = parseInt(document.getElementById('g').value).toString(16);  
-			// var b = parseInt(document.getElementById('b').value).toString(16);  
-			// if(r.length < 2) { r = '0' + r; }   
-			// if(g.length < 2) { g = '0' + g; }   
-			// if(b.length < 2) { b = '0' + b; }   
-			// var rgb = '#'+r+g+b;    
-			// console.log('RGB: ' + rgb); 
-			
-			// connection.send(rgb); 
-
 			connection.send("0");
 			console.log('Flashing...'); 
 		}
-		function adjustBrightness() {
+		function setBrightness() {
 			if (!connected)connect();
 			var b = parseInt(document.getElementById('b').value).toString(16);  
 			connection.send("#"+b);
@@ -103,15 +118,15 @@
 			if (!connected)connect();
 			connection.send("G!");
 			console.log('Getting Selector...'); 	
-		}
-		init();
+		}		
 	</script>
 
 </head>
 <body>
 	<div class="wrap">
+		<span id="connectLight" class="not-connected"></div>
 		<div class="flash button" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>	
-		Brightness: <input id="b" type="range" min="0" max="100" step="1" onchange="adjustBrightness();" />
+		Brightness: <input id="b" type="range" min="0" max="100" step="1" onchange="setBrightness();" />
 		<br /><br />
 		<div class="button" onClick="nextSelector();">Next Pattern</div>
 		<br /><br />
@@ -121,5 +136,8 @@
 		<br /><br />
 	</div> 
 	<div id="debug"></div>
+	<script type="text/javascript">
+		init();
+	</script>
 </body>
 </html>
