@@ -109,15 +109,20 @@
 			console.log('Selector: ' + s); 
 		}
 		function nextSelector() {
-			if (!connected)connect();	
-			// var s = parseInt(document.getElementById('s').value).toString(16);  
-			connection.send("!"+s);
-			console.log('Selector: ' + s); 
+			if (!connected)connect();			
+			connection.send("!>");
+			console.log('Next Selector Pressed'); 
+		}
+		function backSelector() {
+			if (!connected)connect();			
+			connection.send("!<");
+			console.log('Back Selector Pressed'); 
 		}
 		function getSelector() {
 			if (!connected)connect();
 			connection.send("G!");
 			console.log('Getting Selector...'); 	
+			/// needs return return
 		}		
 	</script>
 
@@ -128,7 +133,7 @@
 		<div class="flash button" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>	
 		Brightness: <input id="b" type="range" min="0" max="100" step="1" onchange="setBrightness();" />
 		<br /><br />
-		<div class="button" onClick="nextSelector();">Next Pattern</div>
+		<div class="button" onClick="backSelector();">Back Pattern</div><div class="button" onClick="nextSelector();">Next Pattern</div>
 		<br /><br />
 		Pattern: <input id="s" type="range" min="0" max="9" step="1" onchange="setSelector();" />
 		<br /><br />

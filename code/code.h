@@ -59,7 +59,8 @@ void toggleAutoPilot();
 void resetMessageBuffer();
 void statusUpdate();
 void setBrightness(uint8_t b);
-void advanceSelector();
+void forwardSelector();
+void backSelector();
 
 void toggleDebug();
 void toggleVerbose();

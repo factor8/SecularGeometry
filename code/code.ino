@@ -167,12 +167,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         if(payload[0] == '0') {flash();}
         if(payload[0] == '1') {webSocket.sendTXT(num,"1");}
         if(payload[0] == '!') {
-
-          /// not optimized... char to int is what we need
-          uint8_t s = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
-
-          Serial.println(s);
-          setSelector(s);
+          
+          if(payload[1] == '>'){
+            forwardSelector();
+            Serial.println("forward selector");
+          } else if(payload[1] == '<'){
+            backSelector();
+            Serial.println("backward selector");
+          } else {
+            /// not optimized... char to int is what we need
+            uint8_t s = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
+            setSelector(s);    
+          }
+          
         }
         if(payload[0] == '#') {
             
@@ -651,7 +658,7 @@ void interceptTouch() {
         // }
             
         // Change mode.
-        advanceSelector();
+        forwardSelector();
 
         if (DEBUG) Serial.print(F("User activated mode change."));
 
@@ -761,8 +768,11 @@ void updateSelector() {
 
     effect_start_time = now;
 }
-void advanceSelector(){
+void forwardSelector(){
   future_selector = selector+1;
+}
+void backSelector(){
+  future_selector = selector-1;
 }
 
 void churn() {
