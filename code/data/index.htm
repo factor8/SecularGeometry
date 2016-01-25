@@ -17,6 +17,9 @@
 			width:;
 		}
 		.flash {
+			
+		}
+		.button {
 			color:black;
 			background: white;
 			/*height:3em;*/
@@ -24,6 +27,7 @@
 			text-align: center;
 			margin: 2em;
 			padding:2em;
+			cursor:pointer;
 		}
 	</style>
 	<script>
@@ -56,7 +60,9 @@
 
 		}
 		// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-		
+		function checkConnection() {
+
+		}
 		
 		function flash() {  
 			if (!connected)connect();
@@ -81,22 +87,38 @@
 			connection.send("#"+b);
 			console.log('Brightness: ' + b); 
 		}
-		function advance() {
+		function setSelector() {
 			if (!connected)connect();
 			var s = parseInt(document.getElementById('s').value).toString(16);  
 			connection.send("!"+s);
 			console.log('Selector: ' + s); 
 		}
-
+		function nextSelector() {
+			if (!connected)connect();	
+			// var s = parseInt(document.getElementById('s').value).toString(16);  
+			connection.send("!"+s);
+			console.log('Selector: ' + s); 
+		}
+		function getSelector() {
+			if (!connected)connect();
+			connection.send("G!");
+			console.log('Getting Selector...'); 	
+		}
 		init();
 	</script>
 
 </head>
 <body>
 	<div class="wrap">
-		<div class="flash" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>	
-		Brightness: <input id="b" type="range" min="0" max="100" step="1" onchange="adjustBrightness();" /><br /><br />
-		Pattern: <input id="s" type="range" min="0" max="9" step="1" onchange="advance();" />
+		<div class="flash button" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>	
+		Brightness: <input id="b" type="range" min="0" max="100" step="1" onchange="adjustBrightness();" />
+		<br /><br />
+		<div class="button" onClick="nextSelector();">Next Pattern</div>
+		<br /><br />
+		Pattern: <input id="s" type="range" min="0" max="9" step="1" onchange="setSelector();" />
+		<br /><br />
+		<div class="button" onClick="getSelector();">Get Current Pattern</div>
+		<br /><br />
 	</div> 
 	<div id="debug"></div>
 </body>

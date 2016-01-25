@@ -146,6 +146,7 @@ boolean overtimeTouch = false;
 long firstTouch,touchDuration,lastTouchAction;
 
 
+// Websocket Event Handler WSEH
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
   switch(type) {
@@ -181,8 +182,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
           Serial.println(s);
           setSelector(s);
-        }        
-
+        }
+        
+        if(payload[0] == 'G') {     
+          /// Probably replace this with a switch statement. 
+          if(payload[1]=='!'){
+            // send message to client
+            Serial.printf("Get selector request...Replying: %d\n",selector);
+            webSocket.sendTXT(num, String(selector));    
+          }
+        }
         break;
   }
 
