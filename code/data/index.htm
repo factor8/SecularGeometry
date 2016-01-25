@@ -98,7 +98,7 @@
 		}
 		function setBrightness() {
 			if (!connected)connect();
-			var b = parseInt(document.getElementById('b').value).toString(16);  
+			var b = parseInt(document.getElementById('b').value).toString();  
 			connection.send("#"+b);
 			console.log('Brightness: ' + b); 
 		}

@@ -182,20 +182,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           
         }
         if(payload[0] == '#') {
-            
-          // String br = (const char *) &payload;
-          // Serial.println(br);
-
-          Serial.printf("[%u] Brightness: %s\n", num, payload);
-          // /// not optimized... char to int is what we need
-          // br = br.substring(1);
-
-          // uint8_t b = (uint8_t) strtol((const char *) br, NULL, 10);
-          // // String br = String((const char *) &payload).substring(1);
-          // // uint8_t b;  
-
-          // setBrightness(b);
-          webSocket.sendTXT(num, "Brightness set to "+String(brightness));
+            uint8_t b = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
+            setBrightness(b);
+            webSocket.sendTXT(num, "Brightness set to "+String(brightness));
         }
         
         if(payload[0] == 'G') {     
