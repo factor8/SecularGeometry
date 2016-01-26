@@ -43,7 +43,7 @@ File fsUploadFile;
 #define panelsY 1
 #define pixelsX 5
 #define pixelsY 3
-#define pixelsTotal 20
+#define pixelsTotal 24
 #define panelsCount 20
 boolean autoPilot = true;
 long effect_duration = 300000;
@@ -181,9 +181,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           }
           
         }
+        if(payload[0] == '@') {
+            uint8_t f = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
+            setFrequency(f);
+            webSocket.sendTXT(num, "Frequency set to "+String(effectMS));
+        }
         if(payload[0] == '#') {
             uint8_t b = (uint8_t) strtol((const char *) &payload[1], NULL, 10);
-            setBrightness(b);
+            setBrightness(b);            
             webSocket.sendTXT(num, "Brightness set to "+String(brightness));
         }
         
@@ -200,6 +205,150 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 }
 
+void churn() {
+  // this is where things change.
+  // Update based on interval and phase.
+      
+    first_run = 1;
+    interval = 0;
+    iter = 0;
+    polkadots = 0;
+    // mode = strand;
+
+    ///
+    // mode = panel;
+    // panelsTotal = panelsCount;
+    itermax = panelsTotal;
+
+    // Update selector
+    updateSelector();
+
+    // selector = 0; /// hardcode
+
+    switch (selector) {
+      case 0:
+        // fadeout...
+        effect_id = 1;
+        intervalCount = 0;
+        effectMS = 1;
+        itermax = 200;
+        updatePrimary(color(0,0,0));
+        // updatePrimary(RandomWheel());
+        will_transition = 1;
+        break;          
+      case 1:
+        will_transition = 1;
+        // flavorFill() 
+        effect_id = 1;
+        intervalCount = 20;
+        itermax = panelsTotal;    
+        // updatePrimary(color(0,100,255)); // purple color
+        // updatePrimary(color(100,0,255)); // purple color
+        // updatePrimary(color(0,255,1)); // hop color
+        // updatePrimary(color(255,90,0)); // wheat color
+        updatePrimary(color(1,90,255)); // water color
+        // updatePrimary(color(255,0,0)); // red color
+        // updatePrimary(color(255,255,0)); // yellow color
+        break;    
+      case 2:
+        will_transition = 1;
+        // flavorFill() polkadots
+        effect_id = 1;
+        intervalCount = 20;
+        itermax = panelsTotal;
+      
+        polkadots = 1;
+        updatePrimary();
+        updateSecondary();                
+        break;        
+      case 3:
+        // rainbow()
+        effect_id = 2;
+        effectMS = 400; /// this is set low for panels...
+        intervalCount = 6;
+        itermax = 255;
+        will_transition = 1;        
+        break;
+      case 4:
+        // rainbowCycle()
+        effect_id = 3;
+        effectMS = 50;
+        intervalCount = 20;
+        itermax = 255;        
+        will_transition = 1;
+        break;  
+      case 7:
+        // colorCycle()
+        effect_id = 4;
+        will_transition = 0;
+        intervalCount = 60;
+        effectMS = 300;
+        itermax = panelsTotal;
+        break;            
+      case 6:
+        // sparkle()
+        effect_id = 6;
+        will_transition = 1;
+        effectMS = 1;
+        intervalCount = 10;
+        itermax = 100;
+        density = R(1,panelsTotal-1);
+        decay = 20;
+        updatePrimary(); // random color
+        // updatePrimary(color(0,255,1)); // wheat color
+        // updatePrimary(color(0,255,1)); // hop color
+        //   updateSecondary(color(0,0,0));        
+        break;                
+      case 5:
+        // colorFade()
+        effect_id = 7;
+        will_transition = 1;
+        effectMS = 40;
+        intervalCount = 20;
+        itermax = 100;    
+        break;
+      case 8:
+        // colorCycleFade()
+        effect_id = 8;
+        // iter = 100; // Start on a different color than green
+        will_transition = 1;
+        intervalCount = 20;
+        effectMS = 60;
+        itermax = 255;      
+        break;          
+           
+      default:
+        if (DEBUG) Serial.println(F("Hitting Default Selector Switch..."));      
+        
+        if (autoPilot) {
+         future_selector = 1;
+        } else {
+          future_selector = 0;
+        }
+      
+        break;
+    }
+
+    if (verbose) statusUpdate();    
+
+    if (will_transition) {
+      transitioning = 1;
+      transition_steps = transition_time / loopDelay;
+
+      if (DEBUG) {Serial.print("Transition Steps: ");Serial.println(transition_steps);}
+      
+      current_transition_step = 0;
+      
+      for(int i=0; i<pixelsTotal; i++){
+        colors_past[i] = colors[i];
+      }
+
+    }
+
+    effectMS_counter = 0;
+    iter = 0;
+
+}
 
 /// at some point we may need to create a function that returns pixelsTotal based on mode (panel/mirror/etc) 
 
@@ -764,150 +913,7 @@ void backSelector(){
   future_selector = selector-1;
 }
 
-void churn() {
-  // this is where things change.
-  // Update based on interval and phase.
-      
-    first_run = 1;
-    interval = 0;
-    iter = 0;
-    polkadots = 0;
-    // mode = strand;
 
-    ///
-    // mode = panel;
-    // panelsTotal = panelsCount;
-    itermax = panelsTotal;
-
-    // Update selector
-    updateSelector();
-
-    // selector = 0; /// hardcode
-
-    switch (selector) {
-      case 0:
-        // fadeout...
-        effect_id = 1;
-        intervalCount = 0;
-        effectMS = 1;
-        itermax = 200;
-        updatePrimary(color(0,0,0));
-        // updatePrimary(RandomWheel());
-        will_transition = 1;
-        break;          
-      case 1:
-        will_transition = 1;
-        // flavorFill() 
-        effect_id = 1;
-        intervalCount = 20;
-        itermax = panelsTotal;    
-        // updatePrimary(color(0,100,255)); // purple color
-        // updatePrimary(color(100,0,255)); // purple color
-        // updatePrimary(color(0,255,1)); // hop color
-        // updatePrimary(color(255,90,0)); // wheat color
-        updatePrimary(color(1,90,255)); // water color
-        // updatePrimary(color(255,0,0)); // red color
-        // updatePrimary(color(255,255,0)); // yellow color
-        break;    
-      case 2:
-        will_transition = 1;
-        // flavorFill() polkadots
-        effect_id = 1;
-        intervalCount = 20;
-        itermax = panelsTotal;
-      
-        polkadots = 1;
-        updatePrimary();
-        updateSecondary();                
-        break;        
-      case 3:
-        // rainbow()
-        effect_id = 2;
-        effectMS = 400; /// this is set low for panels...
-        intervalCount = 6;
-        itermax = 255;
-        will_transition = 1;        
-        break;
-      case 4:
-        // rainbowCycle()
-        effect_id = 3;
-        effectMS = 50;
-        intervalCount = 20;
-        itermax = 255;        
-        will_transition = 1;
-        break;  
-      case 7:
-        // colorCycle()
-        effect_id = 4;
-        will_transition = 0;
-        intervalCount = 60;
-        effectMS = 300;
-        itermax = panelsTotal;
-        break;            
-      case 6:
-        // sparkle()
-        effect_id = 6;
-        will_transition = 1;
-        effectMS = 1;
-        intervalCount = 10;
-        itermax = 100;
-        density = R(1,panelsTotal-1);
-        decay = 20;
-        updatePrimary(); // random color
-        // updatePrimary(color(0,255,1)); // wheat color
-        // updatePrimary(color(0,255,1)); // hop color
-        //   updateSecondary(color(0,0,0));        
-        break;                
-      case 5:
-        // colorFade()
-        effect_id = 7;
-        will_transition = 1;
-        effectMS = 40;
-        intervalCount = 20;
-        itermax = 100;    
-        break;
-      case 8:
-        // colorCycleFade()
-        effect_id = 8;
-        // iter = 100; // Start on a different color than green
-        will_transition = 1;
-        intervalCount = 20;
-        effectMS = 60;
-        itermax = 255;      
-        break;          
-           
-      default:
-        if (DEBUG) Serial.println(F("Hitting Default Selector Switch..."));      
-        
-        if (autoPilot) {
-         future_selector = 1;
-        } else {
-          future_selector = 0;
-        }
-      
-        break;
-    }
-
-    if (verbose) statusUpdate();    
-
-    if (will_transition) {
-      transitioning = 1;
-      transition_steps = transition_time / loopDelay;
-
-      if (DEBUG) {Serial.print("Transition Steps: ");Serial.println(transition_steps);}
-      
-      current_transition_step = 0;
-      
-      for(int i=0; i<pixelsTotal; i++){
-        colors_past[i] = colors[i];
-      }
-
-    }
-
-    effectMS_counter = 0;
-    iter = 0;
-
-}
 
 void pour() { 
 

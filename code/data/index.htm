@@ -43,12 +43,13 @@
 		}
 	</style>
 	<script>
-		var debug,connectionIndicator;
+		var output,connectionIndicator;
 		var connection,waiting;
 		var connected = 0;		
+		var debug = 1;
 
 		function init() {
-		    debug = document.getElementById("debug");
+		    output = document.getElementById("output");
 		    connectionIndicator = document.getElementById("connectLight");
 		    // var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
 			connect();	
@@ -60,18 +61,18 @@
 			var pre = document.createElement("p");
 			pre.style.wordWrap = "break-word";
 			pre.innerHTML = message;
-			debug.appendChild(pre);
+			output.appendChild(pre);
 		} 
 
 		function connect() {
 			
-			console.log("Connecting...");
+			if (debug)console.log("Connecting...");
 			connection = new WebSocket('ws://sg-lantern.local:81/', ['arduino']);		   
 	    	connection.onopen = function () {  connection.send('Connected ' + new Date()); connected=1;checkConnection(); }; 
 	    	connection.onclose = function(evt) { console.log('Socket closed'); connected=0; };
 			connection.onerror = function (error) { console.log('Socket Error: ', error); connected=0;};
 			connection.onmessage = function (e) { 
-				console.log('Server: ', e.data);
+				if (debug)console.log('Server: ', e.data);
 				if (e.data == 1) {
 					waiting=0;
 					connected == 1;					
@@ -95,34 +96,40 @@
 		function flash() {  
 			if (!connected)connect();
 			connection.send("0");
-			console.log('Flashing...'); 
+			if (debug)console.log('Flashing...'); 
 		}
 		function setBrightness() {
 			if (!connected)connect();
 			var b = parseInt(document.getElementById('b').value).toString();  
 			connection.send("#"+b);
-			console.log('Brightness: ' + b); 
+			if (debug)console.log('Brightness: ' + b); 
+		}
+		function setFrequency() {
+			if (!connected)connect();
+			var b = parseInt(document.getElementById('frequency').value).toString();  
+			connection.send("@"+b);
+			if (debug)console.log('Speed: ' + b); 
 		}
 		function setSelector() {
 			if (!connected)connect();
 			var s = parseInt(document.getElementById('s').value).toString(16);  
 			connection.send("!"+s);
-			console.log('Selector: ' + s); 
+			if (debug)console.log('Selector: ' + s); 
 		}
 		function nextSelector() {
 			if (!connected)connect();			
 			connection.send("!>");
-			console.log('Next Selector Pressed'); 
+			if (debug)console.log('Next Selector Pressed'); 
 		}
 		function backSelector() {
 			if (!connected)connect();			
 			connection.send("!<");
-			console.log('Back Selector Pressed'); 
+			if (debug)console.log('Back Selector Pressed'); 
 		}
 		function getSelector() {
 			if (!connected)connect();
 			connection.send("G!");
-			console.log('Getting Selector...'); 	
+			if (debug)console.log('Getting Selector...'); 	
 			/// needs return return
 		}		
 	</script>
@@ -131,17 +138,18 @@
 <body>
 	<div class="wrap">
 		<span id="connectLight" class="not-connected" onClick="connect();"></div>
+		
+		Brightness: <input id="b" value="100" type="range" min="0" max="100" step="1" onchange="setBrightness();" /> :: 
+		Effect Speed: <input id="frequency" value="260" type="range" min="0" max="500" step="1" onchange="setFrequency();" />		
 		<div class="flash button" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>			
 		<!-- <br /><br /> -->
 		<div class="button" onClick="backSelector();">Back Pattern</div><div class="button" onClick="nextSelector();">Next Pattern</div>
 		<!-- <br /><br /> -->
 		<!-- Pattern: <input id="s" type="range" min="0" max="9" step="1" onchange="setSelector();" /> -->
 		<br /><br />
-		<div class="button" onClick="getSelector();">Get Current Pattern</div>
-		<br /><br />
-		Brightness: <input id="b" value="100" type="range" min="0" max="100" step="1" onchange="setBrightness();" />
+		<div class="button" onClick="getSelector();">Get Current Pattern</div>		
 	</div> 
-	<div id="debug"></div>
+	<div id="output"></div>
 	<script type="text/javascript">
 		init();
 	</script>
