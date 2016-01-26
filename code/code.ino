@@ -85,7 +85,7 @@ uint16_t active[pixelsTotal]; // Right now this is just for active sparkle pixel
 uint16_t active_count = 0;
 
 // Serial Vars
-boolean DEBUG = 0; // Flag for debugging.
+boolean DEBUG = 1; // Flag for debugging.
 boolean verbose = 0; // Flag for verbose debugging.
 
 // Transition Vars
@@ -457,16 +457,15 @@ void colorCycle() {
       q(i+1,colors[panel_color]); ///sloppy
     } else {
       q(i+1,colors[i]); /// ring issue
+      Serial.print(F("i."));////
     }
-      
-
-      
 
   }
   
   // Add our new random color at the beginning.
-  q(0,RandomWheel());
+  q(0,RandomWheel()); 
   
+  Serial.print(F("queing"));///
 }
 
 void colorFade() {
@@ -496,7 +495,6 @@ void colorFade() {
     q(i, new_color);
   }
 }
-
 
 void colorCycleFade() {
   if (first_run) {
@@ -607,16 +605,15 @@ void candleFlame() {
 /* -- LOAD UP OUR EFFECTS -- */
 // void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade,candleFlame};
 
-uint8_t menu_count = 15; /// fix this to adjust the number of effects.
+uint8_t menu_count = 9; /// fix this to adjust the number of effects.
 
 // #setup
 void setup()
 {
   Serial.begin(115200);
-
-  Serial.begin(115200);
   Serial.print("\n");
   Serial.setDebugOutput(true);
+
   SPIFFS.begin();
   {
     Dir dir = SPIFFS.openDir("/");
@@ -712,10 +709,6 @@ void setup()
   
   // Default selector
   future_selector = 1;
-
-
-  DEBUG = 1;
-  verbose = 0;
 
   if (DEBUG) statusUpdate();
   
@@ -945,8 +938,9 @@ void pour() {
       if (DEBUG) { Serial.print(F("Interval updated to "));Serial.println(interval);  }
     }
 
-
     (*menu[effect_id])();
+
+    if (verbose) Serial.println("Passed pouring"); ///
     effectMS_counter = 0;   
   }
   
@@ -1417,6 +1411,60 @@ void handleFileList() {
     entry.close();
   }
 }
+
+
+bool loadConfig() {
+  File configFile = SPIFFS.open("/config.json", "r");
+  if (!configFile) {
+    Serial.println("Failed to open config file");
+    return false;
+  }
+
+  size_t size = configFile.size();
+  if (size > 1024) {
+    Serial.println("Config file size is too large");
+    return false;
+  }
+
+  // Allocate a buffer to store contents of the file.
+  std::unique_ptr<char[]> buf(new char[size]);
+
+  // We don't use String here because ArduinoJson library requires the input
+  // buffer to be mutable. If you don't use ArduinoJson, you may as well
+  // use configFile.readString instead.
+  configFile.readBytes(buf.get(), size);
+
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.parseObject(buf.get());
+
+  if (!json.success()) {
+    Serial.println("Failed to parse config file");
+    return false;
+  }
+
+  // const char* serverName = json["serverName"];
+  // const char* accessToken = json["accessToken"];
+
+  return true;
+}
+
+bool saveConfig() {
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  
+  // json["serverName"] = "api.example.com";
+  // json["accessToken"] = "128du9as8du12eoue8da98h123ueh9h98";
+
+  File configFile = SPIFFS.open("/config.json", "w");
+  if (!configFile) {
+    Serial.println("Failed to open config file for writing");
+    return false;
+  }
+
+  json.printTo(configFile);
+  return true;
+}
+
 
 
 /* Helper functions */

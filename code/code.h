@@ -10,11 +10,14 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
+#include <ArduinoJson.h>
 #include <Hash.h>
+
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
 
-void q(uint16_t pos, uint32_t c);
+
+
 
 // fill the dots one after the other with said color
 // good for testing purposes
@@ -45,6 +48,7 @@ void updateMode();
 void updateSelector();
 void churn();
 void pour();
+void q(uint16_t pos, uint32_t c);
 void interceptSerial(char x);
 
 void sSetSelector();
@@ -87,30 +91,21 @@ uint32_t RandomColor();
 uint32_t RandomWheel();
 
 uint32_t rgba(byte r, byte g, byte b, int a);
-
-// Create a 24 bit color value from R,G,B
 uint32_t color(byte r, byte g, byte b, int a);
-// Create a 24 bit color value from R,G,B
 uint32_t color(byte r, byte g, byte b);
-
 uint32_t color(uint32_t c, int a);
-
 uint32_t alpha(uint32_t c, int a);
-
 uint32_t combine(uint32_t color1,uint32_t color2);
+uint32_t Wheel(byte WheelPos);
+uint32_t Wheel(byte WheelPos, double alpha);
 
 // Helpers to extract RGB from 32bit color. (/// This could be MACRO...)
 uint8_t extractRed(uint32_t c);
 uint8_t extractGreen(uint32_t c);
 uint8_t extractBlue(uint32_t c);
 
-//Input a value 0 to 255 to get a color value.
-//The colours are a transition r - g -b - back to r
-uint32_t Wheel(byte WheelPos);
-// This is Wheel with alpha.
-uint32_t Wheel(byte WheelPos, double alpha);
-
 // -- Wifi // File System Functions
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 String formatBytes(size_t bytes);
 String getContentType(String filename);
 bool handleFileRead(String path);
@@ -118,5 +113,10 @@ void handleFileUpload();
 void handleFileDelete();
 void handleFileCreate();
 void handleFileList();
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+
+bool loadConfig();
+bool saveConfig();
+
+
+
 int freeRam (); 
