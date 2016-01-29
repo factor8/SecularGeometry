@@ -6,7 +6,7 @@
 #include "code.h"
 #define DATAPIN   13 // Data pin for serial communication to shift registers
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
-#define TOUCHPIN  2 // Touch sensitive switch
+#define TOUCHPIN  4 // Touch sensitive switch
 
 const char* ssid = "LEDpaint";
 const char* password = "betafish";
@@ -246,8 +246,8 @@ void churn() {
         // updatePrimary(color(100,0,255)); // purple color
         // updatePrimary(color(0,255,1)); // hop color
         // updatePrimary(color(255,90,0)); // wheat color
-        updatePrimary(color(1,90,255)); // water color
-        // updatePrimary(color(255,0,0)); // red color
+        // updatePrimary(color(1,90,255)); // water color
+        updatePrimary(color(255,0,0)); // red color
         // updatePrimary(color(255,255,0)); // yellow color
         break;    
       case 2:
@@ -747,8 +747,8 @@ void loop() {
     interceptSerial(x);
   }
 
-  // interceptTouch(); // Listen for touch
-
+  if (now >= then+30) { interceptTouch(); } // Listen for touch
+  
   server.handleClient();
   webSocket.loop();
 } 
@@ -756,7 +756,7 @@ void loop() {
 void interceptTouch() {
 
   if (!touching) {
-    if (readCapacitivePin(TOUCHPIN) < 2) {      
+    if (readCapacitivePin(TOUCHPIN) < 1) {      
       return; 
     } else {
       // First Touch!
@@ -1221,58 +1221,36 @@ void toggleDebug() {if (DEBUG){DEBUG = 0;} else {DEBUG=1;}Serial.print(F("Toggli
 void toggleVerbose() {if (verbose){verbose = 0;} else {verbose=1;}}
 
 
-//  readCapacitivePin
-//  Input: Arduino pin number
-//  Output: A number, from 0 to 17 expressing
-//  how much capacitance is on the pin
-//  When you touch the pin, or whatever you have
-//  attached to it, the number will get higher
-//  http://playground.arduino.cc/Code/CapacitiveSensor  
-//  #include "pins_arduino.h" // Arduino pre-1.0 needs this
 uint8_t readCapacitivePin(int pinToMeasure) {
-  // Variables used to translate from Arduino to AVR pin naming
-  volatile uint32_t* port;
-  volatile uint32_t* ddr;
-  volatile uint32_t* pin;
-  // Here we translate the input pin number from
-  //  Arduino pin number to the AVR PORT, PIN, DDR,
-  //  and which bit of those registers we care about.
-  byte bitmask;
-  port = portOutputRegister(digitalPinToPort(pinToMeasure));
-  ddr = portModeRegister(digitalPinToPort(pinToMeasure));
-  bitmask = digitalPinToBitMask(pinToMeasure);
-  pin = portInputRegister(digitalPinToPort(pinToMeasure));
-  // Discharge the pin first by setting it low and output
-  *port &= ~(bitmask);
-  *ddr  |= bitmask;
-  delay(1);
+  pinMode(pinToMeasure, OUTPUT);
+  digitalWrite(pinToMeasure, LOW);
+  // delay(1);
   // Prevent the timer IRQ from disturbing our measurement
   noInterrupts();
   // Make the pin an input with the internal pull-up on
-  *ddr &= ~(bitmask);
-  *port |= bitmask;
+  pinMode(pinToMeasure, INPUT_PULLUP);
 
-  // Now see how long the pin takes to get pulled up. This manual unrolling of the loop
+  // Now see how long the pin to get pulled up. This manual unrolling of the loop
   // decreases the number of hardware cycles between each read of the pin,
   // thus increasing sensitivity.
   uint8_t cycles = 17;
-       if (*pin & bitmask) { cycles =  0;}
-  else if (*pin & bitmask) { cycles =  1;}
-  else if (*pin & bitmask) { cycles =  2;}
-  else if (*pin & bitmask) { cycles =  3;}
-  else if (*pin & bitmask) { cycles =  4;}
-  else if (*pin & bitmask) { cycles =  5;}
-  else if (*pin & bitmask) { cycles =  6;}
-  else if (*pin & bitmask) { cycles =  7;}
-  else if (*pin & bitmask) { cycles =  8;}
-  else if (*pin & bitmask) { cycles =  9;}
-  else if (*pin & bitmask) { cycles = 10;}
-  else if (*pin & bitmask) { cycles = 11;}
-  else if (*pin & bitmask) { cycles = 12;}
-  else if (*pin & bitmask) { cycles = 13;}
-  else if (*pin & bitmask) { cycles = 14;}
-  else if (*pin & bitmask) { cycles = 15;}
-  else if (*pin & bitmask) { cycles = 16;}
+       if (digitalRead(pinToMeasure)) { cycles =  0;}
+  else if (digitalRead(pinToMeasure)) { cycles =  1;}
+  else if (digitalRead(pinToMeasure)) { cycles =  2;}
+  else if (digitalRead(pinToMeasure)) { cycles =  3;}
+  else if (digitalRead(pinToMeasure)) { cycles =  4;}
+  else if (digitalRead(pinToMeasure)) { cycles =  5;}
+  else if (digitalRead(pinToMeasure)) { cycles =  6;}
+  else if (digitalRead(pinToMeasure)) { cycles =  7;}
+  else if (digitalRead(pinToMeasure)) { cycles =  8;}
+  else if (digitalRead(pinToMeasure)) { cycles =  9;}
+  else if (digitalRead(pinToMeasure)) { cycles = 10;}
+  else if (digitalRead(pinToMeasure)) { cycles = 11;}
+  else if (digitalRead(pinToMeasure)) { cycles = 12;}
+  else if (digitalRead(pinToMeasure)) { cycles = 13;}
+  else if (digitalRead(pinToMeasure)) { cycles = 14;}
+  else if (digitalRead(pinToMeasure)) { cycles = 15;}
+  else if (digitalRead(pinToMeasure)) { cycles = 16;}
 
   // End of timing-critical section
   interrupts();
@@ -1283,8 +1261,8 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   //  the sensor is left pulled high, when you touch
   //  two sensors, your body will transfer the charge between
   //  sensors.
-  *port &= ~(bitmask);
-  *ddr  |= bitmask;
+  digitalWrite(pinToMeasure, LOW);
+  pinMode(pinToMeasure, OUTPUT);
 
   return cycles;
 }
