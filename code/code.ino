@@ -8,14 +8,14 @@
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
 #define TOUCHPIN  4 // Touch sensitive switch
 
-const char* ssid = "LEDpaint";
-const char* password = "betafish";
+const char* ssid;
+const char* pass;
 const char* host = "sg-lantern";
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-//holds the current upload
+// holds the current upload
 File fsUploadFile;
 
 // #define TEST 2
@@ -615,7 +615,7 @@ void setup()
   Serial.setDebugOutput(true);
 
   SPIFFS.begin();
-  {
+  if (DEBUG) {
     Dir dir = SPIFFS.openDir("/");
     while (dir.next()) {    
       String fileName = dir.fileName();
@@ -625,15 +625,20 @@ void setup()
     Serial.printf("\n");
   }
   
+  // Load config.
+  loadConfig();
+  // if (!loadConfig()) {
+    // setup defaults
+  // }
 
   //WIFI INIT
   Serial.printf("Connecting to %s\n", ssid);
   if (String(WiFi.SSID()) != String(ssid)) {
-    WiFi.begin(ssid, password);
+    WiFi.begin(ssid, pass);
   }
   
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(500); /// 
     Serial.print(".");
   }
   Serial.println("");
@@ -1392,7 +1397,7 @@ void handleFileList() {
 
 
 bool loadConfig() {
-  File configFile = SPIFFS.open("/config.json", "r");
+  File configFile = SPIFFS.open("/conf.json", "r"); ///This might break if config doesn't exist...
   if (!configFile) {
     Serial.println("Failed to open config file");
     return false;
@@ -1420,9 +1425,16 @@ bool loadConfig() {
     return false;
   }
 
+  // Load vars
+  ssid = json["ssid"];
+  pass = json["pass"];
+  const char* shost = json["host"];
+
+  Serial.println(shost);
   // const char* serverName = json["serverName"];
   // const char* accessToken = json["accessToken"];
-
+  
+  Serial.println("Config Loaded.");
   return true;
 }
 
@@ -1585,7 +1597,7 @@ uint32_t Wheel(byte WheelPos, double alpha) {
 // Free Ram Output via Adafruit ///Move this into a testing utilities library.
 int freeRam () 
 { 
-  // return getFreeHeap();
+  String(ESP.getFreeHeap());
 }
 
 

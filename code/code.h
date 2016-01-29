@@ -12,12 +12,8 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 #include <Hash.h>
-
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
-
-
-
 
 // fill the dots one after the other with said color
 // good for testing purposes
