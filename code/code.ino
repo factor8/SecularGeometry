@@ -761,11 +761,11 @@ void loop() {
 void interceptTouch() {
 
   if (!touching) {
-    if (readCapacitivePin(TOUCHPIN) < 1) {      
+    if (readCapacitivePin(TOUCHPIN) <= 1) {      
       return; 
     } else {
       // First Touch!
-      if (DEBUG) Serial.println(F("First Touch!"));
+      //if (DEBUG) Serial.println(F("First Touch!"));
       touching = true;
       firstTouch = now;
     }
@@ -809,7 +809,7 @@ void interceptTouch() {
     }  
 
     // Accidental touch, take no action.
-    if (DEBUG) Serial.println(F("Short Touch - No Action"));
+    //if (DEBUG) Serial.println(F("Short Touch - No Action"));
     touching = false;
     return;
   
@@ -1227,49 +1227,71 @@ void toggleVerbose() {if (verbose){verbose = 0;} else {verbose=1;}}
 
 
 uint8_t readCapacitivePin(int pinToMeasure) {
-  pinMode(pinToMeasure, OUTPUT);
-  digitalWrite(pinToMeasure, LOW);
-  // delay(1);
-  // Prevent the timer IRQ from disturbing our measurement
-  noInterrupts();
-  // Make the pin an input with the internal pull-up on
-  pinMode(pinToMeasure, INPUT_PULLUP);
 
-  // Now see how long the pin to get pulled up. This manual unrolling of the loop
-  // decreases the number of hardware cycles between each read of the pin,
-  // thus increasing sensitivity.
-  uint8_t cycles = 17;
-       if (digitalRead(pinToMeasure)) { cycles =  0;}
-  else if (digitalRead(pinToMeasure)) { cycles =  1;}
-  else if (digitalRead(pinToMeasure)) { cycles =  2;}
-  else if (digitalRead(pinToMeasure)) { cycles =  3;}
-  else if (digitalRead(pinToMeasure)) { cycles =  4;}
-  else if (digitalRead(pinToMeasure)) { cycles =  5;}
-  else if (digitalRead(pinToMeasure)) { cycles =  6;}
-  else if (digitalRead(pinToMeasure)) { cycles =  7;}
-  else if (digitalRead(pinToMeasure)) { cycles =  8;}
-  else if (digitalRead(pinToMeasure)) { cycles =  9;}
-  else if (digitalRead(pinToMeasure)) { cycles = 10;}
-  else if (digitalRead(pinToMeasure)) { cycles = 11;}
-  else if (digitalRead(pinToMeasure)) { cycles = 12;}
-  else if (digitalRead(pinToMeasure)) { cycles = 13;}
-  else if (digitalRead(pinToMeasure)) { cycles = 14;}
-  else if (digitalRead(pinToMeasure)) { cycles = 15;}
-  else if (digitalRead(pinToMeasure)) { cycles = 16;}
+  uint8_t total = 0;
+  
+  for(uint8_t i = 0; i < 6; i++) {
 
-  // End of timing-critical section
-  interrupts();
+    pinMode(pinToMeasure, OUTPUT);
 
-  // Discharge the pin again by setting it low and output
-  //  It's important to leave the pins low if you want to 
-  //  be able to touch more than 1 sensor at a time - if
-  //  the sensor is left pulled high, when you touch
-  //  two sensors, your body will transfer the charge between
-  //  sensors.
-  digitalWrite(pinToMeasure, LOW);
-  pinMode(pinToMeasure, OUTPUT);
+    digitalWrite(pinToMeasure, LOW);
 
-  return cycles;
+    //delay(1);
+
+    //noInterrupts();
+
+    pinMode(pinToMeasure, INPUT_PULLUP);
+
+    uint8_t cycles = 17;
+
+    if (digitalRead(pinToMeasure)) { cycles =  0;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  1;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  2;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  3;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  4;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  5;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  6;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  7;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  8;}
+
+    else if (digitalRead(pinToMeasure)) { cycles =  9;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 10;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 11;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 12;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 13;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 14;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 15;}
+
+    else if (digitalRead(pinToMeasure)) { cycles = 16;}
+
+    //interrupts();
+
+    digitalWrite(pinToMeasure, LOW);
+
+    pinMode(pinToMeasure, OUTPUT);
+
+    if(cycles < 1 || cycles > 11) { // outside threshold - resample
+      i--;
+    } else {
+       total = total + cycles;
+    }
+    //return cycles;
+  }
+  return((total/5));
 }
 
 // ==== Webserver Functions
