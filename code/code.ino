@@ -43,7 +43,7 @@ File fsUploadFile;
 #define panelsY 1
 #define pixelsX 5
 #define pixelsY 3
-#define pixelsTotal 20
+#define pixelsTotal 8
 #define panelsCount 20
 boolean autoPilot = true;
 long effect_duration = 100000;
@@ -159,7 +159,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
         // send message to client
         webSocket.sendTXT(num, "Connected");
-    }
+    } 
         break;
     case WStype_TEXT:
         Serial.printf("[%u] get Text: %s\n", num, payload);
@@ -407,7 +407,6 @@ void flavorFill() {
     if (DEBUG) {Serial.println(F("Beginning effect: flavorFill"));}    
     first_run=0;    
   }
-
   
   for (int i=0; i < panelsTotal; i++) {
     if (polkadots && i%2==0) {
@@ -415,7 +414,6 @@ void flavorFill() {
     } else {
       q(i, primary);  
     }
-    
   }
 
 }
@@ -448,26 +446,24 @@ void rainbowCycle() {
 void colorCycle() {
   
   if (DEBUG && first_run) {Serial.println(F("Beginning Effect colorCycle..."));first_run=0;}  
-  
-  // Move the chain along but don't go too far.
-  for (int i=panelsTotal-1; i>=0; i--) {      
-        
-    if (mode == panel) {
-      byte panel_color = panels[i][0];
-      q(i+1,colors[panel_color]); ///sloppy
-    } else {
-      q(i+1,colors[i]); /// ring issue
-      Serial.print(F("i."));////
-    }
 
+  // setup new array and add the new color.
+  uint32_t nextc[panelsTotal];
+  nextc[0] = RandomWheel();
+  
+  // Move the chain along.
+  for (int i=0; i<panelsTotal-1; i++) {
+    /// we will need to account for "panels".
+    nextc[i+1] = colors[i];
   }
   
-  // Add our new random color at the beginning.
-  q(0,RandomWheel()); 
-  
-  Serial.print(F("queing"));///
+  // load up the new array
+  for (int i=0; i<panelsTotal; i++) {              
+      q(i,nextc[i]); 
+  }
 }
 
+// Same as colorCycle but fading.
 void colorFade() {
   
   if (first_run) {
@@ -946,7 +942,7 @@ void pour() {
     (*menu[effect_id])();
 
     if (verbose) Serial.println("Passed pouring"); ///
-    effectMS_counter = 0;   
+    effectMS_counter = 0;
   }
   
 
@@ -975,28 +971,24 @@ void pour() {
   }
 
   for(int i=0; i<pixelsTotal; i++){
-
-      new_color = colors[i];
       
-      if (transitioning) {
-          new_color = color(new_color,transition_percentage);
-          past_color = color(colors_past[i],100-transition_percentage);
+    new_color = colors[i];      
+    
+    if (transitioning) {
+        new_color = color(new_color,transition_percentage);
+        past_color = color(colors_past[i],100-transition_percentage);
+        new_color = combine(new_color,past_color); 
+    }
 
-          new_color = combine(new_color,past_color); 
-        
-      }
+    if (brightness!=100) {
+      new_color = color(new_color,brightness);
+    }
+          
+    // Load up the stip.
+    strip->setPixelColor(i,new_color);    
 
-      if (brightness!=100) {
-        new_color = color(new_color,brightness);    
-      }
+    if (verbose && DEBUG) { Serial.println(new_color,HEX); }
 
-      strip->setPixelColor(i,new_color);    
-
-      // if (brightness!=100) {
-      //   strip->setPixelColor(i,color(colors[i],brightness));    
-      // } else {
-      //   strip->setPixelColor(i,colors[i]);    
-      // }
   }
 
   // this is where the magic happens.
@@ -1005,7 +997,7 @@ void pour() {
 }
 
 
-// virtual void q() =0;
+// Queue up a color 'c' into the color array at position 'pos'.
 void q(uint16_t pos, uint32_t c) {    
   
   int p;
@@ -1245,37 +1237,21 @@ uint8_t readCapacitivePin(int pinToMeasure) {
     uint8_t cycles = 17;
 
     if (digitalRead(pinToMeasure)) { cycles =  0;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  1;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  2;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  3;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  4;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  5;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  6;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  7;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  8;}
-
     else if (digitalRead(pinToMeasure)) { cycles =  9;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 10;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 11;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 12;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 13;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 14;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 15;}
-
     else if (digitalRead(pinToMeasure)) { cycles = 16;}
 
     //interrupts();
