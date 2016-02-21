@@ -603,10 +603,13 @@ void setup()
   }
   
   // Load config.
-  // loadConfig();
-  // if (!loadConfig()) {
+  loadConfig();
+  if (!loadConfig()) {
+    Serial.printf("Config failed to load.\n");
     // setup defaults
-  // }
+
+
+  }
 
   //WIFI INIT
   Serial.printf("Connecting to %s\n", ssid);
@@ -894,7 +897,7 @@ void backSelector(){
 }
 
 
-
+// This where the magic happens
 void pour() { 
 
   // this is where we move forward.
@@ -917,12 +920,16 @@ void pour() {
       iter = 0;
 
       if (interval >= intervalCount) {
-        interval = 0;        
+        interval = 0;
+        phase++;
+        if (DEBUG) { Serial.println("\n");  }
+        if (verbose) { Serial.printf("Phase updated to %d\n",phase);  }      
       } else {
         interval++;
       }
 
-      if (DEBUG) { Serial.print(F("Interval updated to "));Serial.println(interval);  }
+      if (DEBUG) { Serial.printf(".%d",interval);  }
+      if (verbose) { Serial.printf("Interval updated to %d\n",interval);  }
     }
 
     (*menu[effect_id])();
@@ -1060,13 +1067,13 @@ void interceptSerial(char x) {
   if        ( x == '!' )    {   readMode  = 1;    }         //Set Selector
   else if   ( x == '@' )    {   readMode  = 2;    }         //Set Frequency
   else if   ( x == '#' )    {   readMode  = 3;    }         //Set Brightness
-  else if   ( x == '+' )    {   readMode  = 4;    }         //Shift Register IDs, separated by comma (no whitespace)
-  else if   ( x == '-' )    {   readMode  = 5;    }         //Shift Register IDs, separated by comma (no whitespace)
-  else if   ( x == '~' )    {   readMode  = 6;    }         //System Mode 
-  else if   ( x == '*' )    {   readMode  = 7;    }         //System Mode   
+  else if   ( x == '+' )    {   readMode  = 4;    }         //Set Mode
+  else if   ( x == '-' )    {   readMode  = 5;    }         //
+  else if   ( x == '~' )    {   readMode  = 6;    }         //Reload Config
+  else if   ( x == '*' )    {   readMode  = 7;    }         //Toggle Debug
   else if   ( x == '?' )    {   readMode  = 8;    }         //Status Update
-  // else if    ( x == '/' )    {   getFiles();       }   
-  // else if    ( x == '?' )    {   statusUpdate();   }     
+  // else if    ( x == '/' )    {   getFiles();       }       //    
+  // else if    ( x == '?' )    {   statusUpdate();   }       //  
   //Add custom flags here...
   
   //Finish up
@@ -1079,7 +1086,7 @@ void interceptSerial(char x) {
       case 3:      sSetBrightness();      break;
       case 4:      sSetMode();            break;
       // case 5:      setValveOff();      break;
-      // case 6:      setMode();          break;      
+      case 6:      loadConfig();          break;      
       case 7:      toggleDebug();         break;
       case 8:      statusUpdate();        break;
       default:                            break;  
@@ -1167,7 +1174,10 @@ void statusUpdate() {
   Serial.print(F("Brightness: "));
   Serial.println(brightness);
 
-  
+  // wifi info
+  Serial.printf("SSID %s",ssid);
+  Serial.printf("HOST", host);
+
   Serial.println("-------");
   Serial.print(F("panelsTotal: "));
   Serial.println(panelsTotal);  
@@ -1380,7 +1390,7 @@ void handleFileList() {
 
 
 bool loadConfig() {
-  File configFile = SPIFFS.open("/conf.json", "r"); ///This might break if config doesn't exist...
+  File configFile = SPIFFS.open("/config.json", "r"); ///This might break if config doesn't exist...
   if (!configFile) {
     Serial.println("Failed to open config file");
     return false;
@@ -1404,16 +1414,19 @@ bool loadConfig() {
   JsonObject& json = jsonBuffer.parseObject(buf.get());
 
   if (!json.success()) {
-    Serial.println("Failed to parse config file");
+    Serial.println("\nFailed to parse config file");
     return false;
   }
 
   // Load vars
   ssid = json["ssid"];
   pass = json["pass"];
-  // host = json["host"];
+  host = json["host"];
+
+  autoPilot = (json["auto"] == "true") ? true : false;
+   
   
-  Serial.println("Config Loaded.");
+  Serial.println("\nConfig Loaded.");
   return true;
 }
 
@@ -1429,7 +1442,7 @@ bool saveConfig() {
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {
-    Serial.println("Failed to open config file for writing");
+    Serial.println("\nFailed to open config file for writing.");
     return false;
   }
 

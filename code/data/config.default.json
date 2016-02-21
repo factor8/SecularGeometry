@@ -1,4 +1,7 @@
-/// Going to need some (ob)security here probably.
+
+// Strop out comments when modifying.
+
+/// Going to need some security here probably.
 {
 	"wifi":{
 		"ssid":"",
@@ -16,7 +19,8 @@
 		"auto":0,
 		"debug":0,
 		"verbose":0,
-		"transition_time" // this might need to be for each effect
+		"transition_time":, // this might need to be for each effect
+		"is_slave":,
 		},
 	"map":{
 		"orientation":"up",
