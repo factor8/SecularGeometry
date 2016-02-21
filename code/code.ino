@@ -13,30 +13,11 @@ const char* pass= "betafish";
 const char* host= "sg-lantern";
 
 ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 // holds the current upload
 File fsUploadFile;
-
-// #define TEST 2
-// #if (TEST)
-//   #include <Adafruit_NeoPixel.h>
-//   #define DATAPIN   6 // NEOPIXEL mandatory data pin for serial communication to shift registers
-//   #define TOUCHPIN  5 // Touch sensitive switch
-// #elif (TEST == 2)
-//   #include <SPI.h>
-//   #include <Adafruit_WS2801.h>
-//   #define DATAPIN   13 // Data pin for serial communication to shift registers
-//   #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
-//   #define TOUCHPIN  2 // Touch sensitive switch
-// #else 
-//   #include <SPI.h>
-//   #include <Adafruit_WS2801.h>
-//   #define DATAPIN   2 // Data pin for serial communication to shift registers
-//   #define CLOCKPIN  3 // Clock pin for serial communication to shift registers
-//   #define TOUCHPIN  5 // Touch sensitive switch
-// #endif
-// // #include <TrueRandom.h>
 
 // Grid DEF & Vars
 #define panelsX 1
@@ -646,6 +627,10 @@ void setup()
   Serial.print(host);
   Serial.println(".local/edit to see the file browser");
   
+
+  httpUpdater.setup(&server);
+
+
   // start webSocket server
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
@@ -713,6 +698,7 @@ void setup()
 
   if (DEBUG) statusUpdate();
   
+  
   // pixel runner for tracing.
   
   // for (int i = 0; i<pixelsTotal; i++) {
@@ -748,7 +734,7 @@ void loop() {
     interceptSerial(x);
   }
 
-  if (now >= then+30) { interceptTouch(); } // Listen for touch
+  if (now >= then+30) { interceptTouch(); } // Listen for touch ///might not need this.
   
   server.handleClient();
   webSocket.loop();
