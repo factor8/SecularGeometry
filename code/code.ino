@@ -277,7 +277,7 @@ void churn() {
         itermax = 255;        
         will_transition = 1;
         break;  
-      case 7:
+      case 5:
         // colorCycle()
         effect_id = 4;
         will_transition = 0;
@@ -299,7 +299,7 @@ void churn() {
         // updatePrimary(color(0,255,1)); // hop color
         //   updateSecondary(color(0,0,0));        
         break;                
-      case 5:
+      case 7:
         // colorFade()
         effect_id = 7;
         will_transition = 1;
@@ -309,7 +309,7 @@ void churn() {
         break;
       case 8:
         // colorCycleFade()
-        effect_id = 8;
+        effect_id = 5;
         // iter = 100; // Start on a different color than green
         will_transition = 1;
         intervalCount = 20;
@@ -456,8 +456,8 @@ void colorCycle() {
       byte panel_color = panels[i][0];
       q(i+1,colors[panel_color]); ///sloppy
     } else {
-      q(i+1,colors[i]); /// ring issue
-      Serial.print(F("i."));////
+      q(i+1,colors[i+1]); /// ring issue
+      //Serial.print(F("i."));////
     }
 
   }
@@ -465,7 +465,7 @@ void colorCycle() {
   // Add our new random color at the beginning.
   q(0,RandomWheel()); 
   
-  Serial.print(F("queing"));///
+  //Serial.print(F("queing"));///
 }
 
 void colorFade() {
