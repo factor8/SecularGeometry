@@ -8,9 +8,9 @@
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
 #define TOUCHPIN  4 // Touch sensitive switch
 
-const char* ssid;
-const char* pass;
-const char* host = "sg-lantern";
+const char* ssid= "LEDpaint";
+const char* pass= "betafish";
+const char* host= "sg-lantern";
 
 ESP8266WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -43,10 +43,10 @@ File fsUploadFile;
 #define panelsY 1
 #define pixelsX 5
 #define pixelsY 3
-#define pixelsTotal 24
+#define pixelsTotal 20
 #define panelsCount 20
 boolean autoPilot = true;
-long effect_duration = 300000;
+long effect_duration = 100000;
 
 // Instantiate Controller. Num Pix Automatically Generated.
 Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
@@ -626,7 +626,7 @@ void setup()
   }
   
   // Load config.
-  loadConfig();
+  // loadConfig();
   // if (!loadConfig()) {
     // setup defaults
   // }
@@ -1310,7 +1310,6 @@ String formatBytes(size_t bytes){
   }
 }
 
-
 String getContentType(String filename){
   if(server.hasArg("download")) return "application/octet-stream";
   else if(filename.endsWith(".htm")) return "text/html";
@@ -1355,11 +1354,9 @@ void handleFileUpload(){
     filename = String();
   } else if(upload.status == UPLOAD_FILE_WRITE){
     //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
-    if(fsUploadFile)
-      fsUploadFile.write(upload.buf, upload.currentSize);
+    if(fsUploadFile) fsUploadFile.write(upload.buf, upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END){
-    if(fsUploadFile)
-      fsUploadFile.close();
+    if(fsUploadFile) fsUploadFile.close();
     Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
 }
@@ -1415,6 +1412,9 @@ void handleFileList() {
     output += "\"}";
     entry.close();
   }
+
+  output += "]";
+  server.send(200, "text/json", output);
 }
 
 
@@ -1450,22 +1450,21 @@ bool loadConfig() {
   // Load vars
   ssid = json["ssid"];
   pass = json["pass"];
-  const char* shost = json["host"];
-
-  Serial.println(shost);
-  // const char* serverName = json["serverName"];
-  // const char* accessToken = json["accessToken"];
+  // host = json["host"];
   
   Serial.println("Config Loaded.");
   return true;
 }
 
+// bool generateFile(String filename, String array) {}
+
 bool saveConfig() {
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
   
-  // json["serverName"] = "api.example.com";
-  // json["accessToken"] = "128du9as8du12eoue8da98h123ueh9h98";
+  json["ssid"] = ssid;
+  json["pass"] = pass;
+  json["host"] = host;
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile) {

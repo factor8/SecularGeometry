@@ -6,7 +6,9 @@
 	<meta content="SG Lantern" name="apple-mobile-web-app-title"/>	
 	<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
 	<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-	<link href="http://cdn.shopify.com/s/files/1/0901/3118/t/2/assets/favicon.ico?612725279125252275" rel="shortcut icon" type="image/x-icon"/>
+	<!-- <link href="http://cdn.shopify.com/s/files/1/0901/3118/t/2/assets/favicon.ico?612725279125252275" rel="shortcut icon" type="image/x-icon"/> -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation.min.css" rel="stylesheet" type="text/css"/>
+	
 	<style type="text/css">
 		body {
 			background:black;
@@ -136,8 +138,12 @@
 
 </head>
 <body>
-	<div class="wrap">
-		<span id="connectLight" class="not-connected" onClick="connect();"></div>
+	<div class="wrap row">
+		<div class="header row">
+			<div class="small-1 column"><span id="connectLight" class="not-connected" onClick="connect();"></span></div> 
+			<div id="uploader" class="small-11 columns">
+				<input type="file" name="data"><a>Upload</a> <a>Create</a></div>
+		</div>
 		
 		Brightness: <input id="b" value="100" type="range" min="0" max="100" step="1" onchange="setBrightness();" /> :: 
 		Effect Speed: <input id="frequency" value="260" type="range" min="0" max="500" step="1" onchange="setFrequency();" />		
