@@ -1192,7 +1192,6 @@ void statusUpdate() {
   Serial.print(F("Free Ram: "));
   Serial.println(freeRam());
 
-
   Serial.print(F("DEBUG: "));
   Serial.println(DEBUG);
   Serial.print(F("VERBOSE: "));
@@ -1592,9 +1591,9 @@ uint32_t Wheel(byte WheelPos, double alpha) {
 }
 
 // Free Ram Output via Adafruit ///Move this into a testing utilities library.
-int freeRam () 
+String freeRam () 
 { 
-  String(ESP.getFreeHeap());
+  return String(ESP.getFreeHeap());
 }
 
 

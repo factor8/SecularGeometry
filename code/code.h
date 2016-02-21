@@ -11,6 +11,7 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
 #include <Hash.h>
 #include <SPI.h>
 #include <Adafruit_WS2801.h>
@@ -113,6 +114,4 @@ void handleFileList();
 bool loadConfig();
 bool saveConfig();
 
-
-
-int freeRam (); 
+String freeRam (); 
