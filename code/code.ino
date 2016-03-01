@@ -172,6 +172,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             setBrightness(b);            
             webSocket.sendTXT(num, "Brightness set to "+String(brightness));
         }
+        if(payload[0] == 'P') {
+            uint32_t p = (uint32_t) strtol((const char *) &payload[1], NULL, 16);
+            Serial.println(p);
+
+            updatePrimary(p);
+            webSocket.sendTXT(num, "Primary updated");
+        }
         
         if(payload[0] == 'G') {     
           /// Probably replace this with a switch statement. 
@@ -1421,7 +1428,7 @@ bool loadConfig() {
   // Load vars
   ssid = json["ssid"];
   pass = json["pass"];
-  host = json["host"];
+  // host = json["host"];
 
   autoPilot = (json["auto"] == "true") ? true : false;
    
