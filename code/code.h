@@ -1,3 +1,5 @@
+
+
 // Secular Geometry Lantern Code
 // By Jordan Layman 2016
 // www.seculargeometry.com

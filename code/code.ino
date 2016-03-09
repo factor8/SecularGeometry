@@ -24,7 +24,7 @@ File fsUploadFile;
 #define panelsY 1
 #define pixelsX 5
 #define pixelsY 3
-#define pixelsTotal 8
+#define pixelsTotal 20
 #define panelsCount 20
 boolean autoPilot = true;
 long effect_duration = 100000;
@@ -930,18 +930,18 @@ void pour() {
         interval = 0;
         phase++;
         if (DEBUG) { Serial.println("\n");  }
-        if (verbose) { Serial.printf("Phase updated to %d\n",phase);  }      
+        if (DEBUG && verbose) { Serial.printf("Phase updated to %d\n",phase);  }      
       } else {
         interval++;
       }
 
       if (DEBUG) { Serial.printf(".%d",interval);  }
-      if (verbose) { Serial.printf("Interval updated to %d\n",interval);  }
+      if (DEBUG && verbose) { Serial.printf("Interval updated to %d\n",interval);  }
     }
 
     (*menu[effect_id])();
 
-    if (verbose) Serial.println("Passed pouring"); ///
+    if (DEBUG && verbose) Serial.println("Passed pouring"); ///
     effectMS_counter = 0;
   }
   
@@ -987,7 +987,7 @@ void pour() {
     // Load up the stip.
     strip->setPixelColor(i,new_color);    
 
-    if (verbose && DEBUG) { Serial.println(new_color,HEX); }
+    if (DEBUG && verbose) { Serial.println(new_color,HEX); }
 
   }
 
