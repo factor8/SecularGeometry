@@ -1,0 +1,8 @@
+{
+	"ssid":"zzzz-guest",
+	"pass":"18811885",
+	"host":"sg-lantern",
+	"auto":"false",
+	"mode":"slave",
+	"master":"0"
+}

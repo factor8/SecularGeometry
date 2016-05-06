@@ -839,7 +839,7 @@ void pour() {
 
 
 // virtual void q() =0;
-void q(uint16_t pos, uint32_t c) {    
+void q(uint16_t pos, uint32_t c) {
   
   int p;
 
