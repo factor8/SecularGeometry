@@ -12,6 +12,7 @@
 // #include <WiFiClient.h>
 
 #include "SGEffect.h"
+#include "SGWifi.h"
 
 #define frameRate 24 // 40ms = 25fps
 // int pixelsTotal;

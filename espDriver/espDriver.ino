@@ -15,6 +15,8 @@ unsigned long effectDuration = 20000;
 
 Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
 
+SGWifi* wifi = new SGWifi();
+
 // #define panelsTotal 20
 // uint8_t panels[panelsTotal][ringTotal];
 
@@ -91,7 +93,8 @@ void configure() {
     // }
   }
 
-  
+  wifi->init();
+
 
 }
 void init(int pixelsTotal) {
@@ -157,10 +160,11 @@ void loop() {
 			strip->setPixelColor(i,newColor);
 
 		}
-		
-  	
+		  	
     // Cast the spell.
     strip->show();
+
+    wifi->persist();
 
     // strip->setPixelColor(0,effects[0]->p(1));
   	// Serial.println(strip->getPixelColor(0),HEX);

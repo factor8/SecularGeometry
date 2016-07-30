@@ -1,3 +1,6 @@
+#ifndef SG_VECTOR
+#define SG_VECTOR 
+
 // Minimal class to replace std::vector
 template<typename Data>
 class Vector {
@@ -16,3 +19,5 @@ class Vector {
   private:
     void resize() { d_capacity = d_capacity ? d_capacity*2 : 1; Data *newdata = (Data *)malloc(d_capacity*sizeof(Data)); memcpy(newdata, d_data, d_size * sizeof(Data)); free(d_data); d_data = newdata; };// Allocates double the old space
 };
+
+#endif
