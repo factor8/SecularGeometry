@@ -29,8 +29,8 @@ void SGEffect::q(uint16_t pos, uint32_t color) {
 
 
   	if (pos > _nodesTotal) {
-		Serial.println("OUT OF BOUNDS");    
-		return;
+		  Serial.println("OUT OF BOUNDS");    
+		  return;
     }
     frame[pos] = color;
 }

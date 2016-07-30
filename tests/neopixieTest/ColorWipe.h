@@ -17,7 +17,9 @@ class ColorWipe : public SGEffect {
     		blank();   
   		}
 
-		frame[_iter] = _primary;
+  		q(_iter,_primary);
+		
+		// frame[_iter] = _primary;
 		// frame[_iter] = randomWheel();
 		
 		// frame[_iter] = 200;

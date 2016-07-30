@@ -2,10 +2,11 @@
 
 class rollDie : public SGEffect {
 	public:
-	boolean randomize;
 
 	rollDie(){};
-	rollDie(uint32_t frequency,int nodesTotal):SGEffect(nodesTotal){
+	rollDie(int nodesTotal):SGEffect(nodesTotal){init();};
+	rollDie(uint32_t frequency,int nodesTotal):SGEffect(frequency,nodesTotal){
+		if (DEBUG) { DEBUG_OUTPUT.println(F("Initializing effect: RollDie"));}
 		init();
 		_iterMax = 255;
 	}
@@ -13,7 +14,7 @@ class rollDie : public SGEffect {
 
 	boolean step(){		
 		if (_iter >= _iterMax) {
-   			if (randomize)updatePrimary();
+   			if (_randomize)updatePrimary();
     		_iter = 0;     		
   		}
 
@@ -22,9 +23,9 @@ class rollDie : public SGEffect {
     		// frame[i] = wheel( (_iter) % 255); 
   		}
 		
-		// Serial.println(frame[_iter]);
-		// Serial.println(colors[_iter],HEX);
-		_iter++;
+		if (_iter == _nodesTotal) {
+   			if (_randomize) updatePrimary();
+  		}
 
 		return true;
 	}; // overwritten in each effect class

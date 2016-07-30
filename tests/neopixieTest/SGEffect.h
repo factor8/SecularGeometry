@@ -30,6 +30,17 @@ class SGEffect {
 		updateTertiary(uint32_t c),
 		updateAssorted();
 
+	uint32_t 
+		wheel(byte WheelPos),
+		randomColor(),
+		randomWheel(),
+		color(uint32_t c, int a),
+		color(byte r, byte g, byte b),
+		color(byte r, byte g, byte b, int a),
+		rgba(byte r, byte g, byte b, int a),
+		alpha(uint32_t c, int a);
+
+
 	protected:
 		boolean 
 			_isActive,
@@ -45,16 +56,7 @@ class SGEffect {
 			init(),
 			q(uint16_t pos, uint32_t color);
 
-		uint32_t 
-			wheel(byte WheelPos),
-			randomColor(),
-			randomWheel(),
-			color(uint32_t c, int a),
-			color(byte r, byte g, byte b),
-			color(byte r, byte g, byte b, int a),
-			rgba(byte r, byte g, byte b, int a),
-			alpha(uint32_t c, int a);
-
+		
 		static 	uint8_t 
 			extractRed(uint32_t c),
 			extractGreen(uint32_t c),
