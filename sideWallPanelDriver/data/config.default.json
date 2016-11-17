@@ -1,0 +1,45 @@
+
+// Strop out comments when modifying.
+
+/// Going to need some security here probably.
+{
+	"wifi":{
+		"ssid":"",
+		"pass":"",
+		"host":"",
+		"chan":,
+		"web_port":81,
+		"socket_port":80,
+		},
+	"config":{
+		"pixels":0, // 0 is default to sketch
+		"panels":0, // 0 is default to sketch
+		"brightness":100,
+		"effect_duration":,
+		"auto":0,
+		"debug":0,
+		"verbose":0,
+		"transition_time":, // this might need to be for each effect
+		"is_slave":,
+		},
+	"map":{
+		"orientation":"up",
+		"direction":"asc",
+		},
+	// "menu":{
+	// 	"0":{
+	// 		"effect_id":,
+	// 		"effectMS":,
+	// 		"density":,
+	// 		"decay":,
+	// 		"sustain":,
+	// 		"will_transition":,
+	// 		"map_mode":,
+	// 		"itermax":,
+	// 		"interval_count":,
+	// 		"c_primary":,
+	// 		"c_secondary":,
+	// 		"c_tertiary":,
+	// 		},
+	// 	},
+}

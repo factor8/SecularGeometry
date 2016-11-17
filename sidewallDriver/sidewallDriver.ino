@@ -1,9 +1,15 @@
-  #include <SPI.h>
-#include <Adafruit_WS2801.h>
+// #include <SPI.h>
+#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_WS2801.h>
 
 #include "Driver.h"
 
-#define DATAPIN   13 // Data pin for serial communication to shift registers
+#define DATAPIN   12 // Data pin for serial communication to shift registers
+
+#define PIN1 12
+#define PIN2 14
+#define PIN3 2
+
 #define CLOCKPIN  14 // Clock pin for serial communication to shift registers
 uint8_t TOUCHPIN = 4;	// Touch sensitive switch
 
@@ -13,7 +19,13 @@ boolean automatic = 0;
 uint8_t _brightness = 20;
 unsigned long effectDuration = 20000;
 
-Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
+
+uint8_t stripCount = 3;
+Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(80, PIN1, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(80, PIN2, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip3 = Adafruit_NeoPixel(80, PIN3, NEO_GRB + NEO_KHZ800);
+
+Adafruit_NeoPixel pixels[3] = {strip1,strip2,srip3};
 
 SGFileServer* fileServer = new SGFileServer(); 
 // SGConfigFile* config = new SGConfigFile();
@@ -146,15 +158,21 @@ void loop() {
 			if (_brightness<100) {
     		newColor = SGEffect::color(newColor,_brightness);
   		}
-			strip->setPixelColor(i,newColor);
+			
+      for(int s=0; s<stripCount; s++){
+        pixels[s]->setPixelColor(i,newColor);
+      }
+      
 
 		}		  	
     
     // Cast the spell.
-    strip->show();
+    for(int s=0; s<stripCount; s++){
+      pixels[s]->show();
+    }
 
-    // wifi->persist();
-    // fileServer->persist();
+    wifi->persist();
+    fileServer->persist();
 
     // strip->setPixelColor(0,effects[0]->p(1));
   	// Serial.println(strip->getPixelColor(0),HEX);
@@ -436,15 +454,23 @@ void flash( ) {
 
   for(int i=0; i<pixelsTotal; i++){
     colors[i] = strip->getPixelColor(i);
-    strip->setPixelColor(i,0);
+    for(int s=0; s<stripCount; s++){
+      pixels[s]->setPixelColor(i,0);
+    }
 
   }
-  strip->show();
+  for(int s=0; s<stripCount; s++){
+    pixels[s]->show();
+  }
   delay(40);
   for(int i=0; i<pixelsTotal; i++){
-    strip->setPixelColor(i,colors[i]);
+    for(int s=0; s<stripCount; s++){
+      pixels[s]->setPixelColor(i,0);
+    }
   }
-  strip->show();
+  for(int s=0; s<stripCount; s++){
+    pixels[s]->show();
+  }
 }
 
 void statusUpdate() {

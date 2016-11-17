@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SG Lantern Control Panel</title>
+	<meta charset="utf-8"/>
+	<meta content="SG Lantern" name="apple-mobile-web-app-title"/>	
+	<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+	<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+	<!-- <link href="http://cdn.shopify.com/s/files/1/0901/3118/t/2/assets/favicon.ico?612725279125252275" rel="shortcut icon" type="image/x-icon"/> -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation.min.css" rel="stylesheet" type="text/css"/>
+	
+	<style type="text/css">
+		body {
+			background:black;
+			color:white;
+			/*width:20em;*/
+			font-size:120%;
+		}
+		.wrap {
+			width:;
+		}		
+		.button {
+			color:black;
+			background: white;
+			/*height:3em;*/
+			width:80%;
+			text-align: center;
+			margin: 2em;
+			padding:2em;
+			cursor:pointer;
+			border-radius: 4px;			
+		}
+		#connectLight {
+			width:1em;
+			height:1em;
+			display: block;
+			border-radius: 50%;	
+		}
+		.connected {
+			background: green;
+
+		}
+		.not-connected {
+			background:red;
+		}
+		.colorpicker {display: block;margin:2em;}
+		#picker { width: 200px; height: 200px; float:left;}
+        #slide { width: 30px; height: 200px; float:left;}
+	</style>
+	<script type="text/javascript" src="http://www.daviddurman.com/flexi-color-picker/js/colorpicker.min.js"></script>
+
+	<script>
+		var output,connectionIndicator;
+		var connection,waiting;
+		var connected = 0;		
+		var debug = 1;
+
+		function init() {
+		    output = document.getElementById("output");
+		    connectionIndicator = document.getElementById("connectLight");
+		    // var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+			connect();	
+
+			// Setup our ping.			
+			window.setTimeout(function(){window.setInterval(function(){checkConnection();},5000);},6000);
+		}
+		function writeToScreen(message) {
+			var pre = document.createElement("p");
+			pre.style.wordWrap = "break-word";
+			pre.innerHTML = message;
+			output.appendChild(pre);
+		} 
+        
+
+		function connect() {
+			
+			if (debug)console.log("Connecting...");
+			connection = new WebSocket('ws://sg-lantern.local:81/', ['arduino']);		   
+	    	connection.onopen = function () {  connection.send('Connected ' + new Date()); connected=1;checkConnection(); }; 
+	    	connection.onclose = function(evt) { console.log('Socket closed'); connected=0; };
+			connection.onerror = function (error) { console.log('Socket Error: ', error); connected=0;};
+			connection.onmessage = function (e) { 
+				if (debug)console.log('Server: ', e.data);
+				if (e.data == 1) {
+					waiting=0;
+					connected == 1;					
+					// showConnection();
+				}
+			};
+		}
+		// var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
+		function checkConnection() {
+			waiting = 1;
+			connection.send(1);			
+			window.setTimeout(function(){showConnection()},1000);
+		}
+		function showConnection() {			
+			if (!waiting) {
+				connectionIndicator.className = 'connected';
+			} else {
+				connectionIndicator.className = 'not-connected';
+			}
+		}
+		function flash() {  
+			if (!connected)connect();
+			connection.send("0");
+			if (debug)console.log('Flashing...'); 
+		}
+		function setBrightness() {
+			if (!connected)connect();
+			var b = parseInt(document.getElementById('b').value).toString();  
+			connection.send("#"+b);
+			if (debug)console.log('Brightness: ' + b); 
+		}
+		function setFrequency() {
+			if (!connected)connect();
+			var b = parseInt(document.getElementById('frequency').value).toString();  
+			connection.send("@"+b);
+			if (debug)console.log('Speed: ' + b); 
+		}
+		function setSelector() {
+			if (!connected)connect();
+			var s = parseInt(document.getElementById('s').value).toString(16);  
+			connection.send("!"+s);
+			if (debug)console.log('Selector: ' + s); 
+		}
+		function nextSelector() {
+			if (!connected)connect();			
+			connection.send("!>");
+			if (debug)console.log('Next Selector Pressed'); 
+		}
+		function backSelector() {
+			if (!connected)connect();			
+			connection.send("!<");
+			if (debug)console.log('Back Selector Pressed'); 
+		}
+		function getSelector() {
+			if (!connected)connect();
+			connection.send("G!");
+			if (debug)console.log('Getting Selector...'); 	
+			/// needs return return
+		}
+		function setPrimaryColor(hex) {
+			if (!connected)connect();
+			p = parseInt(hex.substring(1), 16);
+			
+			connection.send("P"+p);
+			if (debug)console.log('New Primary Color'+hex);
+			/// needs return return
+		}				
+	</script>
+
+</head>
+<body>
+	<div class="wrap row">
+		<div class="header row">
+			<div class="small-1 column"><span id="connectLight" class="not-connected" onClick="connect();"></span></div> 
+			<div id="uploader" class="small-11 columns">
+				<input type="file" name="data"><a>Upload</a> <a>Create</a></div>
+		</div>
+		
+		Brightness: <input id="b" value="100" type="range" min="0" max="100" step="1" onchange="setBrightness();" /> :: 
+		Effect Speed: <input id="frequency" value="260" type="range" min="0" max="500" step="1" onchange="setFrequency();" />		
+		<div class="flash button" name="flash" value="flash" onClick="flash();" ><p>Flash</p></div>			
+		<!-- <br /><br /> -->
+		<div class="button" onClick="backSelector();">Back Pattern</div><div class="button" onClick="nextSelector();">Next Pattern</div>
+        
+
+        <div class="colorpicker">
+        	<div id="picker"></div>
+            <div id="slide"></div>
+        </div>
+        <script type="text/javascript">
+			ColorPicker(
+            document.getElementById('slide'),
+            document.getElementById('picker'),
+            function(hex, hsv, rgb) {
+              document.body.style.backgroundColor = hex;
+              console.log(rgb);
+              setPrimaryColor(hex);
+              // setPrimaryColor(rgb.r,rgb.g,rgb.b);
+            });
+
+        </script>
+		<!-- <br /><br /> -->
+		<!-- Pattern: <input id="s" type="range" min="0" max="9" step="1" onchange="setSelector();" /> -->
+		<br /><br />
+		<div class="button" onClick="getSelector();">Get Current Pattern</div>		
+	</div> 
+	<div id="output"></div>
+	<script type="text/javascript">
+		init();
+	</script>
+</body>
+</html>

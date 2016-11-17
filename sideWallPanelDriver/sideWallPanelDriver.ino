@@ -1,19 +1,20 @@
   #include <SPI.h>
-#include <Adafruit_WS2801.h>
+#include <Adafruit_DotStar.h>
 
 #include "Driver.h"
 
-#define DATAPIN   13 // Data pin for serial communication to shift registers
-#define CLOCKPIN  14 // Clock pin for serial communication to shift registers
+#define DATAPIN   12 // Data pin for serial communication to shift registers
+#define CLOCKPIN  13 // Clock pin for serial communication to shift registers
 uint8_t TOUCHPIN = 4;	// Touch sensitive switch
 
-int pixelsTotal = 20;
+int pixelsTotal = 144;
 boolean DEBUG = true;
-boolean automatic = 0;
-uint8_t _brightness = 20;
+boolean automatic = 1;
+uint8_t _brightness = 100;
 unsigned long effectDuration = 20000;
 
-Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
+Adafruit_DotStar* strip = new Adafruit_DotStar(pixelsTotal, DATAPIN, CLOCKPIN, DOTSTAR_BRG);
+// Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
 
 SGFileServer* fileServer = new SGFileServer(); 
 // SGConfigFile* config = new SGConfigFile();
@@ -38,18 +39,19 @@ void configure() {
 		
 		effects.push_back(new Rainbow(pixelsTotal));
 		effects[e]->updatePrimary(SGEffect::color(0,255,0));
-		effects[e]->updateFrequency(800);
+		effects[e]->updateFrequency(260);
 		e++;
 
-    effects.push_back(new Rainbow(pixelsTotal));
-    effects[e]->updatePrimary(SGEffect::color(0,255,0));
-    effects[e]->updateFrequency(800);
+    effects.push_back(new RainbowCycle(pixelsTotal));
+    effects[e]->updatePrimary(SGEffect::color(0,255,0));   
+    effects[e]->updateFrequency(10);
     e++;
 
+    
 	  effects.push_back(new ColorCycle(pixelsTotal));
     Vector<uint32_t> f = effects[e-1]->exportFrame();
     effects[e]->importFrame(f);
-    effects[e]->updateFrequency(300);
+    effects[e]->updateFrequency(30);
     e++;
 
 		effects.push_back(new Scanner(pixelsTotal));
@@ -62,21 +64,17 @@ void configure() {
   //   effects[e]->updateFrequency(100);
   //   e++;
 
-    effects.push_back(new RainbowCycle(pixelsTotal));
-    effects[e]->updatePrimary(SGEffect::color(0,255,0));   
-    effects[e]->updateFrequency(100);
-    e++;
-
-    effects.push_back(new ColorWipe(pixelsTotal));
-    effects[e]->updatePrimary(SGEffect::color(0,222,0));    
-    effects[e]->updateFrequency(100);
-    e++;
+    
+    // effects.push_back(new ColorWipe(pixelsTotal));
+    // effects[e]->updatePrimary(SGEffect::color(0,222,0));    
+    // effects[e]->updateFrequency(100);
+    // e++;
 
 
-    effects.push_back(new RainbowCycle(pixelsTotal));
-    effects[e]->updatePrimary(SGEffect::color(0,255,0));    
-    effects[e]->updateFrequency(100);
-    e++;
+    // effects.push_back(new RainbowCycle(pixelsTotal));
+    // effects[e]->updatePrimary(SGEffect::color(0,255,0));    
+    // effects[e]->updateFrequency(100);
+    // e++;
 
 
 		Serial.print("Effect Count: ");Serial.println(effects.size());
@@ -95,7 +93,7 @@ void configure() {
     // }
   }  
 
-  wifi->init();
+  // wifi->init();
   // wifi->init(SGConfigFile& config->['wifi']);
 
 } 
