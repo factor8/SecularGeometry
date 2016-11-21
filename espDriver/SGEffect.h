@@ -94,11 +94,11 @@ class SGEffect {
 
 };
 
-#include "ColorFill.h"
-#include "ColorWipe.h"
-#include "ColorCycle.h"
-#include "Rainbow.h"
-#include "RainbowCycle.h"
-#include "Scanner.h"
-#include "RollDie.h"
+#include "effects/ColorFill.h"
+#include "effects/ColorWipe.h"
+#include "effects/ColorCycle.h"
+#include "effects/Rainbow.h"
+#include "effects/RainbowCycle.h"
+#include "effects/Scanner.h"
+#include "effects/RollDie.h"
 
