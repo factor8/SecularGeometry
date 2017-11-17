@@ -2,19 +2,20 @@
 #include <Arduino.h>
 
 // #include <ArduinoJson.h>
-// #include <ESP8266WiFi.h>
-// #include <ESP8266WebServer.h>
-// #include <ESP8266HTTPUpdateServer.h>
-// #include <ESP8266mDNS.h>
-// #include <FS.h>
-// #include <Hash.h>
-// #include <WebSocketsServer.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266mDNS.h>
+#include <FS.h>
+#include <Hash.h>
+#include <WebSocketsServer.h>
 // #include <WiFiClient.h>
 
 #include "SGEffect.h"
 #include "SGWifi.h"
 #include "SGFileServer.h"
 #include "SGConfigFile.h"
+
 
 #define frameRate 24 // 40ms = 25fps
 
@@ -31,7 +32,10 @@ enum eName {eOff,eColorWipe,eRainbow,eRainbowCycle,eScanner};
 
 Vector<SGEffect*> effects;
 
-uint8_t effectList[7] = {eOff,eScanner,eColorWipe,eColorWipe,eRainbow,eRainbowCycle,eScanner};/// pretty sure we don't need this anymore
+// Server Vars
+ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Touch Vars
 boolean touching = false;
@@ -62,3 +66,6 @@ uint8_t readCapacitivePin(int pinToMeasure);
 void flash();
 boolean drive();
 
+// -- Wifi // File System Functions
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+#include "WebServer.h"

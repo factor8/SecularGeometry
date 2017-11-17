@@ -25,10 +25,12 @@ class SGWifi {
          isIP(String str);
 
       void 
-         init();
+         init(),
+         init(String ssid, String pass);
          
       int 
-         persist();
+         persist(),
+         status();
 
       boolean DEBUG = true;
 
@@ -36,14 +38,18 @@ class SGWifi {
       String 
          _ssid,
          _pass,
-         _dns,
+         _dnsName,
          _fallbackSSID,
          _fallbackPass;
 
       uint8_t 
-         _status, 
+         _status,
          _mode,
-         _channel;
+         _channel,
+         _dnsActive;
+
+      IPAddress 
+         ip;
       
       unsigned long
          _start,

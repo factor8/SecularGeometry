@@ -4,6 +4,15 @@ SGWifi::~SGWifi() {}
 
 int SGWifi::persist() {
 
+	/* 	WIFISTATUS CODES
+		WIFISTATUS_CONNECTED
+		WIFISTATUS_DISABLED
+		WIFISTATUS_INITIALIZING
+		WIFISTATUS_CONNECTING
+		WIFISTATUS_APSETUP
+		WIFISTATUS_FAILED
+	*/	
+
 	// If we aren't connected, let's get there...
 	if (_status != WIFISTATUS_CONNECTED) {
 		unsigned long _now = millis();
@@ -57,7 +66,10 @@ int SGWifi::persist() {
 					}
 
 					if (ap) {
-						if (DEBUG) Serial.println("AP started");
+						if (DEBUG) Serial.println("AP started");						
+						// IPAddress ip = WiFi.softAPIP();
+						// if (DEBUG) Serial.printf("IP Address: %s",ip.toString());
+  
 					} else {
 						if (DEBUG) Serial.println("AP failed"); // AP failed ... shutdown wifi
 						_status = WIFISTATUS_DISABLED;
@@ -74,6 +86,7 @@ int SGWifi::persist() {
 			} else { // sta is connected 	
 				if (DEBUG) Serial.println("Station is connected...");			
 				_mode = 1; ///I think this means we are not AP
+				// IPAddress ip = WiFi.softAPIP();
 				_status = WIFISTATUS_CONNECTED;            
 				return _status;
 			}			
@@ -89,9 +102,24 @@ int SGWifi::persist() {
 			} else {
 				_status = WIFISTATUS_CONNECTED; // we have an AP connection
 			}
-		}
-		
+		}		
+
 		return _status;	
+	}
+	
+	if (_dnsActive == false && _status == WIFISTATUS_CONNECTED) {
+		_dnsName = "SG_" + String(ESP.getChipId()).substring(4);
+		if (DEBUG) Serial.printf("Hostname: %s.local\n", _dnsName.c_str());    
+
+		if(MDNS.begin(_dnsName.c_str())) {
+		    if (DEBUG) Serial.println("MDNS responder started");
+		    MDNS.addService("http", "tcp", WEB_PORT);
+		    MDNS.addService("ws", "tcp", WS_PORT);
+		    _dnsActive = true;
+		} else {
+		  	if (DEBUG) Serial.println("MDNS responder failed...");
+		  	_dnsActive = false;
+		} 		
 	}
 
 	// WiFi is connected 
@@ -99,6 +127,17 @@ int SGWifi::persist() {
 	// do DNS for AP
 	// if(_mode != 1); 
 	  // dnsServer->processNextRequest();
+}
+
+int SGWifi::status() {
+	_status = WiFi.status();
+	return _status;
+}
+
+void SGWifi::init(String ssid, String pass) {
+	_ssid = ssid;
+	_pass = pass;
+	init();
 }
 
 void SGWifi::init() {

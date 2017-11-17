@@ -9,32 +9,15 @@
 #define TOUCHPIN  5 // Touch sensitive switch
 
 // Grid DEF & Vars
-#define panelsX 1
-#define panelsY 1
-#define pixelsX 5
-#define pixelsY 3
-#define pixelsTotal 20
-#define panelsCount 20
-// Buckyball
-byte panels[panelsCount][10] = { {0,1,2,3,4,0,0,0,0,0}, {5,6,7,8,9,10,11,12,13,14}, {15,16,17,18,19,20,21,22,23,24}, 
-                      {25,26,27,28,29,29,29,29,29,29}, {30,30,30,30,30,30,30,30,30,30} };
-
-// Neopixel Matrix
-// byte panels[8][pixelsX] = { {0,8,16,24,32},{1,9,17,25,33},{2,10,18,26,34},{3,11,19,27,35},
-                     // {4,12,20,28,36},{5,13,21,29,37},
-                     // {6,14,22,30,38},{7,15,23,31,39}};
-
-
-// For the next buckyball
-// byte panels[6][10] = { {0,0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0,0}, 
-                      // {0,0,0,0,0,0,0,0,0,0}, {0,0,0,0,0,0,0,0,0,0}, {30,30,30,30,30,30,30,30,30,30} };
-
-#define loopDelay 40 // framerate. 25ms = 40fps
+#define pixelsTotal 40
+boolean autoPilot = true;
+long effect_duration = 300000;
 
 // Instantiate Controller. Num Pix Automatically Generated.
 Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
 // Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
 
+#define loopDelay 40 // framerate. 40ms = 24fps
 uint8_t brightness = 100;
 
 // Alignment,Direction,Pattern Enumeration
@@ -48,7 +31,7 @@ uint16_t panelsTotal = pixelsTotal; // Default
 uint32_t colors[pixelsTotal]; /// We may be removing this...
 uint32_t colors_past[pixelsTotal];
 
-uint16_t active[pixelsTotal]; // Right now this is just for active sparkle pixels.
+uint8_t active[pixelsTotal]; // Right now this is just for active sparkle pixels.
 uint16_t active_count = 0;
 
 // Serial Vars
@@ -71,8 +54,7 @@ short transition_steps;
 long 
   now,
   then,
-  effect_start_time,
-  effect_duration;
+  effect_start_time;
 
 uint16_t /// set defaults
   iter,
@@ -111,7 +93,7 @@ uint8_t  readMode = 0;      // Wait
 // Touch Vars
 boolean touching = false;
 boolean overtimeTouch = false;
-boolean autoPilot = true; /// Move setting this to a better place.
+
 long firstTouch,touchDuration,lastTouchAction;
 
 
@@ -218,15 +200,7 @@ void colorCycle() {
   // Move the chain along but don't go too far.
   for (int i=panelsTotal-1; i>=0; i--) {      
         
-    if (mode == panel) {
-      byte panel_color = panels[i][0];
-      q(i+1,colors[panel_color]); ///sloppy
-    } else {
-      q(i+1,colors[i]); /// ring issue
-    }
-      
-
-      
+    q(i+1,colors[i]); /// ring issue
 
   }
   
@@ -334,12 +308,12 @@ void sparkle(){
       if (active_count < density) {
         uint16_t new_pixel;
         do {        
-          new_pixel = R(0,panelsTotal);                    
+          new_pixel = R(0,panelsTotal);
         } while (active[new_pixel]);
           q(new_pixel,primary);        
           active[new_pixel] = 1;
           active_count++;
-      }    
+      }
   }
 
   // Fade Out
@@ -353,14 +327,24 @@ void sparkle(){
         active_count--;
       }
     }
+  }
+}
+
+void candleFlame() {
+  if (DEBUG && first_run) {Serial.println(F("Beginning effect: candleFlame"));first_run=0;}    
+
+  int intensity = random(210, 255);
+  
+  for (int i=0; i < panelsTotal; i++) {
+    
+    q(i,color(intensity,(intensity*22)/100,0));
 
   }
-
 }
 
 
 /* -- LOAD UP OUR EFFECTS -- */
-void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade};
+void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade,candleFlame};
 
 uint8_t menu_count = 15; /// fix this to adjust the number of effects.
 
@@ -418,7 +402,7 @@ void loop() {
   
   if (now >= then+loopDelay) {
 
-    then = now;    
+    then = now;
 
     if (selector != future_selector) churn();
 
@@ -440,88 +424,89 @@ void loop() {
 
 void interceptTouch() {
 
-  if (!touching) {
-    if (readCapacitivePin(TOUCHPIN) < 2) {      
-      return; 
-    } else {
-      // First Touch!
-      if (DEBUG) Serial.println(F("First Touch!"));
-      touching = true;
-      firstTouch = now;
-    }
-  }  
+ if (!touching) {
+   if (readCapacitivePin(TOUCHPIN) < 3) {      
+     return; 
+   } else {
+     // First Touch!
+     if (DEBUG) Serial.println(F("First Touch!"));
+     touching = true;
+     firstTouch = now;
+   }
+ }  
 
-  // How long have we been touching?
-  touchDuration = now - firstTouch;
+ // How long have we been touching?
+ touchDuration = now - firstTouch;
 
-  // We've stopped touching now so...
-  if (readCapacitivePin(TOUCHPIN) < 2) {
-    // Are we overtime?
-    if (overtimeTouch) {
-      if (DEBUG) Serial.println(F("Ending overtime touch."));
-      touching = false; overtimeTouch = false; return;
-    }    
-    
-    // If it was not an accidental touch...
-    if (touchDuration > 50) {
-      
-      // Debounce
-      if (now - lastTouchAction > 300) {
-        
-        // Do touch action
-        // if (autopilot == 0) {
-          // toggleAutoPilot();
-        // }
-            
-        // Change mode.
-        future_selector = selector+1; /// messy
+ // We've stopped touching now so...
+ if (readCapacitivePin(TOUCHPIN) < 2) {
+   // Are we overtime?
+   if (overtimeTouch) {
+     if (DEBUG) Serial.println(F("Ending overtime touch."));
+     touching = false; overtimeTouch = false; return;
+   }    
+   
+   // If it was not an accidental touch...
+   if (touchDuration > 50) {
+     
+     // Debounce
+     if (now - lastTouchAction > 300) {
+       
+       // Do touch action
+       // if (autopilot == 0) {
+         // toggleAutoPilot();
+       // }
+           
+       // Change mode.
+       future_selector = selector+1; /// messy
 
-        if (DEBUG) Serial.print(F("User activated mode change."));
+       if (DEBUG) Serial.print(F("User activated mode change."));
 
-        lastTouchAction = now;
-      } else {
-        if (DEBUG) Serial.println(F("Debounce!"));
-      }
-      
-      touching = false;
-      
-      return;
-    }  
+       lastTouchAction = now;
+     } else {
+       if (DEBUG) Serial.println(F("Debounce!"));
+     }
+     
+     touching = false;
+     
+     return;
+   }  
 
-    // Accidental touch, take no action.
-    if (DEBUG) Serial.println(F("Short Touch - No Action"));
-    touching = false;
-    return;
-  
-  // Or we haven't so check some other stuff...
-  } else {
+   // Accidental touch, take no action.
+   if (DEBUG) Serial.println(readCapacitivePin(TOUCHPIN));
+   if (DEBUG) Serial.println(F("Short Touch - No Action"));
+   touching = false;
+   return;
+ 
+ // Or we haven't so check some other stuff...
+ } else {
 
-    // Like if we are overtime on our touch
-    if (touchDuration >= 1000) { 
-      
-      if (!overtimeTouch) {
-        // Overtime triggered.
-        if (DEBUG) Serial.println(F("Overtime Triggered"));
-        
-        // Turn autopilot off.
-        if (!autoPilot) {
-          toggleAutoPilot();        
+   // Like if we are overtime on our touch
+   if (touchDuration >= 1000) { 
+     
+     if (!overtimeTouch) {
+       // Overtime triggered.
+       if (DEBUG) Serial.println(F("Overtime Triggered"));
+       
+       // Turn autopilot off.
+       if (!autoPilot) {
+         toggleAutoPilot();        
 
-          // Notify that we are turning it on.
-          flash();
-          delay(100);
-          flash();          
-          
-        } else {          
-          // Turn the lamp off.
-          future_selector = 0;
-          toggleAutoPilot();
-        }
+         // Notify that we are turning it on.
+         flash();
+         delay(100);
+         flash();          
+         
+       } else {          
+         // Turn the lamp off.
+         future_selector = 0;
+         toggleAutoPilot();
+       }
 
-        overtimeTouch = true;
-      }   
-    }
-  }
+       overtimeTouch = true;
+     }   
+   }
+ }
 }
 
 // Just flash black for a short bit.
@@ -550,7 +535,7 @@ void updateMode() {
 
           break;
         case panel:
-          panelsTotal = panelsCount;
+          panelsTotal = pixelsTotal;
 
           break;
         default:
@@ -596,6 +581,8 @@ void churn() {
     polkadots = 0;
     // mode = strand;
 
+    statusUpdate();
+
     ///
     // mode = panel;
     // panelsTotal = panelsCount;
@@ -620,17 +607,23 @@ void churn() {
       case 1:
         will_transition = 1;
         // flavorFill() 
-        effect_id = 1;
+        effect_id = 8;
         intervalCount = 20;
-        itermax = panelsTotal;    
-        // updatePrimary(color(0,100,255)); // purple color
-        // updatePrimary(color(100,0,255)); // purple color
+        effectMS = 50;
+        itermax = panelsTotal;            
+        // polkadots = 1;
+        updatePrimary(color(100,0,255)); // purple color
+        // updatePrimary(color(255,120,120)); // peach color
         // updatePrimary(color(0,255,1)); // hop color
-        // updatePrimary(color(255,90,0)); // wheat color
-        updatePrimary(color(1,90,255)); // water color
+        // updatePrimary(color(255,120,120)); // peach color
+        // updatePrimary(color(255,60,0)); // wheat color
+        // updatePrimary(color(255,45,0)); // flame color
+        // updatePrimary(color(1,90,255)); // water color
+        // updatePrimary(color(250,50,1)); // gold color
+        // updatePrimary(color(255,230,230)); // white color
         // updatePrimary(color(255,0,0)); // red color
-        // updatePrimary(color(255,255,0)); // yellow color
-        effect_duration = 300000;
+        // updatePrimary(color(255,255,0)); // yellow color        
+        // updatePrimary(color(0,0,255)); // blue color        
         break;
       // case 2:
       //   will_transition = 1;
@@ -659,9 +652,19 @@ void churn() {
         intervalCount = 20;
         itermax = panelsTotal;
       
-        polkadots = 1;
-        updatePrimary();
-        updateSecondary();        
+        polkadots = 0;
+        // updatePrimary(color(255,0,0)); // red color
+        // updatePrimary(color(255,120,120)); // peach color
+        // updatePrimary(color(255,100,0)); // yellow color        
+        // updatePrimary(color(255,90,0)); // wheat color
+        // updatePrimary(color(0,255,1)); // hop color
+
+        // updateSecondary(color(255,230,230)); // white color
+        // updateSecondary(color(100,0,255)); // purple color        
+        updateSecondary(color(250,50,0)); // orange color        
+        // updateSecondary(color(1,120,255)); // water color
+        // updateSecondary(color(1,1,255)); // blue color
+        
         // updatePrimary();
         // updateSecondary();
         break;        
@@ -692,7 +695,7 @@ void churn() {
         break;            
       case 6:
         // sparkle()
-        effect_id = 6;
+        effect_id = 6; //effect_id = 6; sparkle
         will_transition = 1;
         effectMS = 1;
         intervalCount = 10;
@@ -832,12 +835,6 @@ void pour() {
       }
 
       strip->setPixelColor(i,new_color);    
-
-      // if (brightness!=100) {
-      //   strip->setPixelColor(i,color(colors[i],brightness));    
-      // } else {
-      //   strip->setPixelColor(i,colors[i]);    
-      // }
   }
 
   // this is where the magic happens.
@@ -852,67 +849,9 @@ void q(uint16_t pos, uint32_t c) {
   int p;
 
   // In here we need to be able to check the orientation, mode, and then check to see if we are compositing two effects.
-  // flag for overlay / transition.
-
-  if (mode == strand) {
-    /// Still need orientation and direction statements here
-    colors[pos] = c;
-  } else 
-  if (mode == mirrored) { /// Mirror mode should be seperate and augment any of the other modes. ie any mode could be mirrod.
-    // left/right mirror mode.
-    // p = mirror(pos);
-  } else 
-  if (mode == panel) {
-    
-    
-    if (pos >= panelsTotal) {
-      Serial.println("OUT OF BOUNDS");    
-      }
-    for (int i=0;i<panelsTotal;i++) {             
-      colors[panels[pos][i]] = c;
-    }
-    // left/right mirror mode.
-    // p = mirror(pos);
+  // flag for overlay / transition.  
+    colors[pos] = c;  
   
-
-  // } else   
-  // if  (mode == matrix) { // Make each panel do the same thing.
-      
-  //   // Serial.println(orientation);
-  //   // Serial.print(F("--- "));Serial.println(pos);
-  //   if (orientation == horizontal) {
-  //     for (int i=0;i<pixelsTotal/panelsX;i++) {       
-  //       p = pixelsY*pos+i;
-        
-  //       // p = pixelsY*pos+i;
-  //       // strip->setPixelColor(p, c);
-  //       // Serial.println(p);
-  //     }
-  //   } else if (orientation == vertical) {
-  
-  //     for (int i=0;i<pixelsTotal/pixelsY;i++) {
-  //       /// I think these are for the Fan
-  //       // p = (i%2) ? (panelsX*i)+(pixelsY-1)-(pos) : (i*panelsX)+(pos);
-  //       // This one might be better....
-  //       // p = (i%2) ? (pixelsY*i)+(pixelsY-1)-(pos) : (i*pixelsY)+(pos);
-        
-  //       // This panel mapping is for dodecahedron cells       
-  //       colors[pos] = c;
-      
-  //       // Serial.println(p);
-  //     }
-  //   }
-  
-  }  
-
-  // if (transitioning) {
-    // colors_future[p] = c;
-  // } else {
-    // colors[p] = c;
-  // }
-
-  
-  // strip->setPixelColor(p,c);
 }
 
 // Serial Functions
@@ -1009,8 +948,8 @@ void toggleAutoPilot() {
 
 
 void resetMessageBuffer(){
-    memset( messageBuffer, '\0', sizeof(messageBuffer) );   
-  }
+  memset( messageBuffer, '\0', sizeof(messageBuffer) );   
+}
 
 void statusUpdate() {
   // Serial.print(F("Is Dave there?"));
@@ -1064,14 +1003,76 @@ void toggleDebug() {if (DEBUG){DEBUG = 0;} else {DEBUG=1;}Serial.print(F("Toggli
 void toggleVerbose() {if (verbose){verbose = 0;} else {verbose=1;}}
 
 
-//  readCapacitivePin
-//  Input: Arduino pin number
-//  Output: A number, from 0 to 17 expressing
-//  how much capacitance is on the pin
-//  When you touch the pin, or whatever you have
-//  attached to it, the number will get higher
-//  http://playground.arduino.cc/Code/CapacitiveSensor  
-//  #include "pins_arduino.h" // Arduino pre-1.0 needs this
+ // readCapacitivePin
+ // Input: Arduino pin number
+ // Output: A number, from 0 to 17 expressing
+ // how much capacitance is on the pin
+ // When you touch the pin, or whatever you have
+ // attached to it, the number will get higher
+ // http://playground.arduino.cc/Code/CapacitiveSensor  
+ // #include "pins_arduino.h" // Arduino pre-1.0 needs this
+
+// uint8_t readCapacitivePin(int pinToMeasure) {
+//   // Variables used to translate from Arduino to AVR pin naming
+//   volatile uint8_t* port;
+//   volatile uint8_t* ddr;
+//   volatile uint8_t* pin;
+//   // Here we translate the input pin number from
+//   //  Arduino pin number to the AVR PORT, PIN, DDR,
+//   //  and which bit of those registers we care about.
+//   byte bitmask;
+//   port = portOutputRegister(digitalPinToPort(pinToMeasure));
+//   ddr = portModeRegister(digitalPinToPort(pinToMeasure));
+//   bitmask = digitalPinToBitMask(pinToMeasure);
+//   pin = portInputRegister(digitalPinToPort(pinToMeasure));
+//   // Discharge the pin first by setting it low and output
+//   *port &= ~(bitmask);
+//   *ddr  |= bitmask;
+//   delay(1);
+//   // Prevent the timer IRQ from disturbing our measurement
+//   noInterrupts();
+//   // Make the pin an input with the internal pull-up on
+//   *ddr &= ~(bitmask);
+//   *port |= bitmask;
+
+//   // Now see how long the pin to get pulled up. This manual unrolling of the loop
+//   // decreases the number of hardware cycles between each read of the pin,
+//   // thus increasing sensitivity.
+//   uint8_t cycles = 17;
+//        if (*pin & bitmask) { cycles =  0;}
+//   else if (*pin & bitmask) { cycles =  1;}
+//   else if (*pin & bitmask) { cycles =  2;}
+//   else if (*pin & bitmask) { cycles =  3;}
+//   else if (*pin & bitmask) { cycles =  4;}
+//   else if (*pin & bitmask) { cycles =  5;}
+//   else if (*pin & bitmask) { cycles =  6;}
+//   else if (*pin & bitmask) { cycles =  7;}
+//   else if (*pin & bitmask) { cycles =  8;}
+//   else if (*pin & bitmask) { cycles =  9;}
+//   else if (*pin & bitmask) { cycles = 10;}
+//   else if (*pin & bitmask) { cycles = 11;}
+//   else if (*pin & bitmask) { cycles = 12;}
+//   else if (*pin & bitmask) { cycles = 13;}
+//   else if (*pin & bitmask) { cycles = 14;}
+//   else if (*pin & bitmask) { cycles = 15;}
+//   else if (*pin & bitmask) { cycles = 16;}
+
+//   // End of timing-critical section
+//   interrupts();
+
+//   // Discharge the pin again by setting it low and output
+//   //  It's important to leave the pins low if you want to 
+//   //  be able to touch more than 1 sensor at a time - if
+//   //  the sensor is left pulled high, when you touch
+//   //  two sensors, your body will transfer the charge between
+//   //  sensors.
+//   *port &= ~(bitmask);
+//   *ddr  |= bitmask;
+
+//   return cycles;
+// }
+
+
 uint8_t readCapacitivePin(int pinToMeasure) {
   // Variables used to translate from Arduino to AVR pin naming
   volatile uint8_t* port;
@@ -1095,7 +1096,7 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   *ddr &= ~(bitmask);
   *port |= bitmask;
 
-  // Now see how long the pin takes to get pulled up. This manual unrolling of the loop
+  // Now see how long the pin to get pulled up. This manual unrolling of the loop
   // decreases the number of hardware cycles between each read of the pin,
   // thus increasing sensitivity.
   uint8_t cycles = 17;

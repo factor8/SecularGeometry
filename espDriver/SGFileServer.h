@@ -15,6 +15,8 @@
 // enum SGFileServer_STATUS {WIFISTATUS_INITIALIZING,WIFISTATUS_CONNECTING,WIFISTATUS_APSETUP,WIFISTATUS_CONNECTED,WIFISTATUS_DISABLED,WIFISTATUS_FAILED};
 // enum SGFileServer_MODE {WIFI,WIFI_AP,};
 
+// ESP8266WebServer webServer(80);
+
 class SGFileServer {
 	public:
 
@@ -26,8 +28,8 @@ class SGFileServer {
 		void
 			configureServers(IPAddress ip),
 			connected(),
-			webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);
-
+			webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length);		
+			
 		String       		
 			getDNS(),
 			getIP(),
@@ -63,7 +65,10 @@ class SGFileServer {
 	  
 		String 
 			_dnsName,
-			_ip;      		
+			_ip;
+
+		File 
+			fileUpload;	
 
 		unsigned long
 			_start,
@@ -71,14 +76,18 @@ class SGFileServer {
 
 		String getContentType(String filename);
 
-		boolean 
-			handleFileRead(String path),        	
+		void
+			handleFileList();
+
+		boolean 			
+			handleFileRead(String path),
+			handleFileUpload(),
 			isCaptivePortal(),
 			isIp(String str),
 			isMdns(String str);
 
 
-		std::unique_ptr <ESP8266WebServer> webServer;
+		std::unique_ptr <ESP8266WebServer> webServer;		
 		std::unique_ptr <WebSocketsServer> socketServer;
 		std::unique_ptr <DNSServer>        dnsServer;
 

@@ -75,7 +75,7 @@
 		function connect() {
 			
 			if (debug)console.log("Connecting...");
-			connection = new WebSocket('ws://sg-lantern.local:81/', ['arduino']);		   
+			connection = new WebSocket('ws://sg_11.local:81/', ['arduino']);		   
 	    	connection.onopen = function () {  connection.send('Connected ' + new Date()); connected=1;checkConnection(); }; 
 	    	connection.onclose = function(evt) { console.log('Socket closed'); connected=0; };
 			connection.onerror = function (error) { console.log('Socket Error: ', error); connected=0;};

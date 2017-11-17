@@ -19,6 +19,9 @@ SGFileServer* fileServer = new SGFileServer();
 // SGConfigFile* config = new SGConfigFile();
 SGWifi* wifi = new SGWifi();
 
+String ssid = "LEDpaint";
+String pass = "betafish";
+
 // uint8_t panels[panelsTotal][ringTotal];
 
 void configure() {
@@ -95,7 +98,7 @@ void configure() {
     // }
   }  
 
-  wifi->init();
+  wifi->init(ssid,pass);
   // wifi->init(SGConfigFile& config->['wifi']);
 
 } 
@@ -153,8 +156,8 @@ void loop() {
     // Cast the spell.
     strip->show();
 
-    // wifi->persist();
-    // fileServer->persist();
+    wifi->persist();
+    fileServer->persist();
 
     // strip->setPixelColor(0,effects[0]->p(1));
   	// Serial.println(strip->getPixelColor(0),HEX);
@@ -460,9 +463,11 @@ void statusUpdate() {
   // Serial.print("Phase: ");
   // Serial.println(phase);
 
+  Serial.printf("Connection status: %d\n", wifi->status());
+  WiFi.printDiag(Serial);
+
   Serial.print("Free Ram: ");
   Serial.println(freeRam());
-
 
   Serial.print("DEBUG: ");
   Serial.println(DEBUG);
@@ -559,7 +564,7 @@ boolean drive() {
 void setup() {
 
   Serial.begin(115200);
-  Serial.setDebugOutput(true);
+  if (DEBUG) Serial.setDebugOutput(true);
   Serial.println("Starting up...");
   
   configure();
@@ -577,6 +582,6 @@ void setup() {
 // Free Ram Output via Adafruit ///Move this into a testing utilities library.
 String freeRam () 
 {
-  return "";
-  // return String(ESP.getFreeHeap());
+  // return "";
+  return String(ESP.getFreeHeap());
 }

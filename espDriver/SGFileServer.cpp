@@ -1,13 +1,14 @@
 #include "SGFileServer.h"
 
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length){}
+
 SGFileServer::~SGFileServer() {}
 
 int SGFileServer::persist() {
 
 	if (isSetup()) {
-		dnsServer->processNextRequest();
-   		webServer->handleClient();
-   		socketServer->loop();
+	webServer->handleClient();
+	socketServer->loop();
 	}	
 	
 }
@@ -19,75 +20,65 @@ void SGFileServer::init() {
 
 
 	if(SPIFFS.begin()) {
-      	if (DEBUG) Serial.println("File system mounted");
-      	_mounted = true;
-   	} else {
-    	if (DEBUG) Serial.println("File system failed");
-    	_mounted = false;
-   	}
+		if (DEBUG) Serial.println("File system mounted");
+		_mounted = true;
+	} else {
+		if (DEBUG) Serial.println("File system failed");
+		_mounted = false;
+	}
 
-   	if (DEBUG) {
-    	Dir dir = SPIFFS.openDir("/");
-    	while (dir.next()) {    
+	if (DEBUG) {
+		Dir dir = SPIFFS.openDir("/");
+		while (dir.next()) {    
 			String fileName = dir.fileName();
-	      	size_t fileSize = dir.fileSize();
+			size_t fileSize = dir.fileSize();
 			if (DEBUG) Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
-	    }
+		}
 		if (DEBUG) Serial.printf("\n");
 	}
 
-   	// Make this configurable.
-   	_dnsName = "SG_" + String(ESP.getChipId()).substring(4);
+  /// Make this configurable.
+  // _dnsName = "SG_" + String(ESP.getChipId()).substring(4);
+  
+  //SERVER INIT
+  webServer.reset(new ESP8266WebServer(WEB_PORT));
 
-   	dnsServer.reset(new DNSServer());        
-	dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
-	
-	if(dnsServer->start(DNS_PORT, "*", WiFi.softAPIP())) { // captive dns portal
-   		Serial.println("DNS captive portal started");
-	} else {
-   		Serial.println("DNS captive portal failed");
-	}
+  //list directory
+  webServer->on("/list", HTTP_GET, std::bind(&SGFileServer::handleFileList, this));
+  //load editor
+  webServer->on("/edit", HTTP_GET, [&](){ 
+  		if (DEBUG) Serial.println("Try for edit...");    ///test code 
+		if(!handleFileRead("/edit.htm")) webServer->send(404, "text/plain", "FileNotFound");
+  });
+  // //create file
+  // webServer->on("/edit", HTTP_PUT, handleFileCreate);
+  // //delete file
+  // webServer->on("/edit", HTTP_DELETE, handleFileDelete);
+  // //first callback is called after the request has ended with all parsed arguments
+  // //second callback handles file uploads at that location
+  // webServer->on("/edit", HTTP_POST, [&](){ webServer->send(200, "text/plain", ""); }, std::bind(&SGFileServer::handleFileUpload, this));
+   
+  webServer->onNotFound(std::bind(&SGFileServer:: handleNotFound, this));
+  webServer->begin();
+  if (DEBUG) Serial.println("HTTP server started");
 
-   	_setup = true;
+  socketServer.reset(new WebSocketsServer(WS_PORT));
+  socketServer->onEvent(std::bind(&SGFileServer::webSocketEvent, this));
+  // socketServer->onEvent(webSocketEvent);
+  socketServer->begin();
+  if (DEBUG) Serial.println("WebSocket server started");  
+
+
+  _setup = true;
 
 }
 
-void SGFileServer::webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
-
+WebSocketServerEvent SGFileServer::webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
+	if (DEBUG) Serial.println("WebSocket Event Triggered.");  
+	
 }
 
 void SGFileServer::configureServers(IPAddress ip) {
-
-	dnsServer.reset(new DNSServer());
-	dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
-	if(dnsServer->start(DNS_PORT, "*", ip)) { // captive dns portal
-		if (DEBUG) Serial.println("DNS captive portal started");
-	} else {
-		if (DEBUG) Serial.println("DNS captive portal failed");
-	}
-	
-	// IPAddress ip = WiFi.softAPIP();
-	
-	// if (DEBUG) Serial.printf("IP Address: %s",ip);
-	
-	webServer.reset(new ESP8266WebServer(WEB_PORT));
-	webServer->onNotFound(std::bind(&SGFileServer::handleNotFound, this));
-	webServer->begin();
-	if (DEBUG) Serial.println("HTTP server started");
-
-	socketServer.reset(new WebSocketsServer(WS_PORT));
-	socketServer->begin();
-	if (DEBUG) Serial.println("WebSocket server started");
-
-	// socketServer->onEvent(std::bind(&SGFileServer::WebSocketEvent, this));
-	
-	if(MDNS.begin(_dnsName.c_str())) {
-	   	if (DEBUG) Serial.println("MDNS responder started");
-	   	MDNS.addService("http", "tcp", WEB_PORT);
-	   	MDNS.addService("ws", "tcp", WS_PORT);
-	} else {
-		if (DEBUG) Serial.println("MDNS responder failed");
-	}	
 
 }
 
@@ -97,14 +88,14 @@ boolean SGFileServer::loadConfig(String path) {
    char input[32];
    File configFile = SPIFFS.open(path, "r");
    if (!configFile) {
-      if (DEBUG) Serial.println("Failed to open config file.");
-      return false;
+	  if (DEBUG) Serial.println("Failed to open config file.");
+	  return false;
    }
 
    size_t size = configFile.size();
    if (size > 1024) {
-      if (DEBUG) Serial.println("Config file size is too large");
-      return false;
+	  if (DEBUG) Serial.println("Config file size is too large");
+	  return false;
    }
 
    std::unique_ptr<char[]> buf(new char[size]);
@@ -114,8 +105,8 @@ boolean SGFileServer::loadConfig(String path) {
    JsonObject& json = jsonBuffer.parseObject(buf.get());
 
    if (!json.success()) {
-      if (DEBUG) Serial.println("Failed to parse config file");
-      return false;
+	  if (DEBUG) Serial.println("Failed to parse config file");
+	  return false;
    }
    
    // strcpy(input, json["wifi_name"]);
@@ -126,6 +117,31 @@ boolean SGFileServer::loadConfig(String path) {
    // wifi_password = String(input);
 
    return true;
+}
+
+void SGFileServer::handleFileList() {
+	if(!webServer->hasArg("dir")) {webServer->send(500, "text/plain", "BAD ARGS"); return;}
+	
+	String path = webServer->arg("dir");
+	Serial.println("handleFileList: " + path);
+	Dir dir = SPIFFS.openDir(path);
+	path = String();
+
+	String output = "[";
+	while(dir.next()){
+		File entry = dir.openFile("r");
+		if (output != "[") output += ',';
+		bool isDir = false;
+		output += "{\"type\":\"";
+		output += (isDir)?"dir":"file";
+		output += "\",\"name\":\"";
+		output += String(entry.name()).substring(1);
+		output += "\"}";
+		entry.close();
+	}
+  
+  	output += "]";
+  	webServer->send(200, "text/json", output);
 }
 
 boolean SGFileServer::createFile(String name) {
@@ -144,43 +160,71 @@ boolean SGFileServer::wipeFiles() {
 
 boolean SGFileServer::handleFileRead(String path) {
    if (DEBUG) Serial.println("handleFileRead: " + path);
-   if(path.endsWith("/")) path += "index.html";
-      String contentType = getContentType(path);
+   if(path.endsWith("/")) path += "index.htm";
+	  String contentType = getContentType(path);
    String pathWithGz = path + ".gz";
+   
    if(SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)) {
-      if(SPIFFS.exists(pathWithGz))
-         path += ".gz";
-      File file = SPIFFS.open(path, "r");
-      size_t sent = webServer->streamFile(file, contentType);
-      file.close();
-      return true;
+	  if(SPIFFS.exists(pathWithGz))
+		 path += ".gz";
+	  File file = SPIFFS.open(path, "r");
+	  size_t sent = webServer->streamFile(file, contentType);
+	  file.close();
+	  return true;
    }
    return false;
 }
+
+boolean SGFileServer::handleFileUpload(){
+  if(webServer->uri() != "/edit") return false;
+  HTTPUpload& upload = webServer->upload();
+  
+  if(upload.status == UPLOAD_FILE_START){
+	
+	String filename = upload.filename;
+	if(!filename.startsWith("/")) filename = "/"+filename;
+	Serial.print("handleFileUpload Name: "); Serial.println(filename);
+	fileUpload = SPIFFS.open(filename, "w");
+	filename = String();
+  
+  } else if(upload.status == UPLOAD_FILE_WRITE){
+  
+	//Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
+	if(fileUpload) fileUpload.write(upload.buf, upload.currentSize);
+  
+  } else if(upload.status == UPLOAD_FILE_END){
+	if(fileUpload) fileUpload.close();
+	Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+  }
+
+  /// we need more checks before we say 'true'.
+  return true;
+}
+
 void SGFileServer::handleNotFound() {
    if ((isCaptivePortal())) { 
-      return;
+	  return;
    }
    if(!handleFileRead(webServer->uri())) {
-      String message = "File Not Found\n\n";
-      message += "URI: ";
-      message += webServer->uri();
-      message += "\nMethod: ";
-      message += ( webServer->method() == HTTP_GET ) ? "GET" : "POST";
-      message += "\nArguments: ";
-      message += webServer->args();
-      message += "\n";
+	  String message = "File Not Found\n\n";
+	  message += "URI: ";
+	  message += webServer->uri();
+	  message += "\nMethod: ";
+	  message += ( webServer->method() == HTTP_GET ) ? "GET" : "POST";
+	  message += "\nArguments: ";
+	  message += webServer->args();
+	  message += "\n";
 
-      for ( uint8_t i = 0; i < webServer->args(); i++ ) {
-         message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
-      }
-      webServer->send ( 404, "text/plain", message );
+	  for ( uint8_t i = 0; i < webServer->args(); i++ ) {
+		 message += " " + webServer->argName ( i ) + ": " + webServer->arg ( i ) + "\n";
+	  }
+	  webServer->send ( 404, "text/plain", message );
    }
 }
 
 boolean SGFileServer::isMdns(String str) {
    if(str.substring(str.length() - 6) == ".local")
-      return true;
+	  return true;
    return false;
 }
 
@@ -190,21 +234,21 @@ boolean SGFileServer::isSetup() {
 
 boolean SGFileServer::isIp(String str) {
    for (int i = 0; i < str.length(); i++) {
-      int c = str.charAt(i);
-      if (c != '.' && (c < '0' || c > '9')) {
-         return false;
-      }
+	  int c = str.charAt(i);
+	  if (c != '.' && (c < '0' || c > '9')) {
+		 return false;
+	  }
    }
    return true;
 }
 
 boolean SGFileServer::isCaptivePortal() {
    if ( !isIp(webServer->hostHeader()) && !isMdns(webServer->hostHeader()) ) { 
-      if (DEBUG) Serial.println("Request redirected to captive portal");
-      webServer->sendHeader("Location", String("http://" + String(_dnsName) + ".local/" ), true);
-      webServer->send ( 302, "text/plain", ""); 
-      webServer->client().stop();
-      return true;
+	  if (DEBUG) Serial.println("Request redirected to captive portal");
+	  webServer->sendHeader("Location", String("http://" + String(_dnsName) + ".local/" ), true);
+	  webServer->send ( 302, "text/plain", ""); 
+	  webServer->client().stop();
+	  return true;
    }
    return false;
 }
@@ -234,12 +278,12 @@ String SGFileServer::getContentType(String filename) {
 //format bytes
 String SGFileServer::formatBytes(size_t bytes){
   if (bytes < 1024){
-    return String(bytes)+"B";
+	return String(bytes)+"B";
   } else if(bytes < (1024 * 1024)){
-    return String(bytes/1024.0)+"KB";
+	return String(bytes/1024.0)+"KB";
   } else if(bytes < (1024 * 1024 * 1024)){
-    return String(bytes/1024.0/1024.0)+"MB";
+	return String(bytes/1024.0/1024.0)+"MB";
   } else {
-    return String(bytes/1024.0/1024.0/1024.0)+"GB";
+	return String(bytes/1024.0/1024.0/1024.0)+"GB";
   }
 }

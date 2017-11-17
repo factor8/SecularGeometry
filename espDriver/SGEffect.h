@@ -24,7 +24,6 @@ class SGEffect {
 	void status();
 	virtual int test();
 
-
 	boolean isActive(){return _isActive;};
 	boolean willTransition(){return _willTransition;};
 	uint32_t p(int index); // Return color at pixel index.
@@ -52,15 +51,15 @@ class SGEffect {
 	Vector<uint32_t> exportFrame();
 
 	static uint32_t 
-			wheel(byte WheelPos),
-			randomColor(),
-			randomWheel(),
-			color(uint32_t c, int a),
-			color(byte r, byte g, byte b),
-			color(byte r, byte g, byte b, int a),
-			rgba(byte r, byte g, byte b, int a),
-			alpha(uint32_t c, int a),
-			combine(uint32_t color1,uint32_t color2);
+		wheel(byte WheelPos),
+		randomColor(),
+		randomWheel(),
+		color(uint32_t c, int a),
+		color(byte r, byte g, byte b),
+		color(byte r, byte g, byte b, int a),
+		rgba(byte r, byte g, byte b, int a),
+		alpha(uint32_t c, int a),
+		combine(uint32_t color1,uint32_t color2);
 
 	static 	uint8_t 
 		extractRed(uint32_t c),
