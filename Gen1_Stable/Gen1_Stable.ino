@@ -12,13 +12,13 @@
 #define pixelsTotal 40
 boolean autoPilot = true;
 long effect_duration = 300000;
+uint8_t brightness = 100;
 
 // Instantiate Controller. Num Pix Automatically Generated.
 Adafruit_WS2801* strip = new Adafruit_WS2801(pixelsTotal, DATAPIN, CLOCKPIN);
 // Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(pixelsTotal, DATAPIN, NEO_GRB + NEO_KHZ800);
 
 #define loopDelay 40 // framerate. 40ms = 24fps
-uint8_t brightness = 100;
 
 // Alignment,Direction,Pattern Enumeration
 enum {asc,desc,   horizontal,vertical,  strand,panel, mirrored, ring};
@@ -80,7 +80,6 @@ uint32_t
   secondary,
   tertiary;
 
-
 uint8_t a = 100; // Using this for alpha reference in Fade Out; /// move up or fix as needed
 uint8_t red,green,blue = 0; // Using this to fade in.
 
@@ -95,7 +94,6 @@ boolean touching = false;
 boolean overtimeTouch = false;
 
 long firstTouch,touchDuration,lastTouchAction;
-
 
 /// at some point we may need to create a function that returns pixelsTotal based on mode (panel/mirror/etc) 
 
@@ -300,33 +298,163 @@ void sparkle(){
   // density = 10; /// unhardcode 
   // Serial.println(density);
 
+  // if (iter == 0) updatePrimary();
   if (iter == 0 && interval == 0) updatePrimary();
 
   // Pop In
-  if (iter % 3 == 0) {    /// unhardcode magic numbers
+  if (iter % 12 == 0) {    /// unhardcode magic numbers
       
-      if (active_count < density) {
+      if (active_count < panelsTotal) {
         uint16_t new_pixel;
         do {        
           new_pixel = R(0,panelsTotal);
         } while (active[new_pixel]);
-          q(new_pixel,primary);        
-          active[new_pixel] = 1;
+          // updatePrimary();
+          colors_past[new_pixel] = primary;
+          active[new_pixel] = 200;
           active_count++;
       }
   }
 
-  // Fade Out
+  // Manage Fades
   for(int i=0; i < panelsTotal; i++ ) {    
-    if (active[i]) {
-      uint32_t pixel_color = colors[i];
-      pixel_color = color(pixel_color,95);
+
+    if (active[i] > 0) {      
+      uint32_t pixel_color = 0;
+
+      // if (i==2) {        
+      //   Serial.print(i);
+      //   Serial.print(": ");
+      //   Serial.print(active[i]);
+      //   Serial.print(", ");
+      //   Serial.print(200-active[i]);
+      //   Serial.print(", ");
+      //   Serial.println(colors[i],HEX);
+      // }
+
+      if (active[i] > 100) {       
+        pixel_color = color(colors_past[i],200-active[i]);        
+      }
+
+      if (active[i] <= 100) {
+        pixel_color = color(colors_past[i],active[i]);        
+      }      
+
       q(i,pixel_color);
-      if (!pixel_color) {
-        active[i] = 0;
-        active_count--;
+      active[i] -= 3;
+
+      if (active[i] < 3) {
+          active_count--;
+          active[i] = 0;
+          q(i,0);
+      }
+    }    
+  }
+}
+
+uint8_t decayList[pixelsTotal];
+void pulseDecay(){
+  
+  if (first_run) {
+    if (DEBUG) {Serial.println(F("Beginning Effect pulseDecay..."));first_run=0;}    
+
+    itermax = 50;
+    intervalCount = 2;
+    iter = 0;  
+  } 
+  
+  // if (interval == 0) updatePrimary();
+  if (iter == 0 && interval == 0) {
+  
+    updatePrimary();
+    active_count = 0;
+    for(int i=0;i<pixelsTotal;i++)  {      
+      q(i,0);
+      active[i] = 0;
+    }
+
+    for (int a=0; a<panelsTotal; a++) {
+      decayList[a] = a;
+    }
+
+    for (int a=0; a<=panelsTotal; a++) {
+      
+      uint8_t r = random(a,panelsTotal);
+      uint8_t temp = decayList[a];
+      decayList[a] = decayList[r];
+      decayList[r] = temp;
+
+      // Serial.print(decayList[a]);
+      // Serial.print(",");
+    }
+    // Serial.print("\n");
+  }
+
+  // Serial.print(F("Interval is..."));
+  // Serial.println(interval);
+
+  // fade in
+  if (interval == 0) {
+    for (int i=0; i < panelsTotal; i++) {    
+      q(i,color(primary,iter));
+    }    
+
+    // if (i==2) {        
+          // Serial.print(iter);
+          // Serial.print(": ");
+    //       Serial.print(active[i]);
+    //       Serial.print(", ");
+    //       Serial.print(200-active[i]);
+          // Serial.print(", ");
+          // Serial.println(colors[2],HEX);
+    //     }
+  }
+
+  if (interval > 0) {
+    
+    if (iter % 2 == 0) {    /// unhardcode magic numbers
+
+      if (active_count <= panelsTotal) {
+      
+        // uint16_t new_pixel,safeword=0;
+        // do {        
+        //   new_pixel = R(0,panelsTotal+2);          
+        //   // Serial.print(new_pixel);
+        //   // Serial.print(", ");
+        // } while (active[new_pixel] && safeword++ < 20);
+        
+        active[decayList[active_count]] = itermax;
+        Serial.print("Fading out pixel ");
+        Serial.println(decayList[active_count]);
+        active_count++;
       }
     }
+  
+    // Manage Fades
+    for(int i=0; i < panelsTotal; i++ ) {    
+
+      if (active[i] > 1) {      
+        uint32_t pixel_color = 0;
+
+        if (active[i] <= 100) {
+          pixel_color = color(primary,active[i]);        
+        }      
+
+        q(i,pixel_color);
+        active[i] -= 5;
+
+        if (active[i] < 5) {
+          // active_count--;
+          active[i] = 1;
+          q(i,0);
+        }
+      }    
+    }
+  }
+
+  // wrap it up
+  if(interval >= 2 && active_count >= panelsTotal){      
+      iter=itermax;      
   }
 }
 
@@ -342,9 +470,33 @@ void candleFlame() {
   }
 }
 
+void pulse() {
+  if (DEBUG && first_run) {Serial.println(F("Beginning effect: pulse"));first_run=0;direction=1;}    
+
+  uint16_t k;
+  itermax = 60;
+
+  if (direction == 1) {
+    k = iter;
+    if (k >= itermax) {direction = 0; }
+  }else{
+    k = itermax-iter;
+    if (k <= 0) { 
+      direction = 1; 
+      updatePrimary(); 
+    }
+    
+  }  
+
+  for (int i=0; i < panelsTotal; i++) {    
+    q(i,color(primary,k));
+  }
+
+}
+
 
 /* -- LOAD UP OUR EFFECTS -- */
-void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,colorCycleFade,sparkle,colorFade,candleFlame};
+void (*menu[])() = {fadeOut,flavorFill,rainbow,rainbowCycle,colorCycle,pulseDecay,sparkle,colorFade,candleFlame,pulse};
 
 uint8_t menu_count = 15; /// fix this to adjust the number of effects.
 
@@ -352,6 +504,7 @@ uint8_t menu_count = 15; /// fix this to adjust the number of effects.
 void setup()
 {
   Serial.begin(9600);
+  randomSeed(analogRead(0));
 
   updatePrimary(color(159,0,255));
   secondary = color(255,255,255);
@@ -377,22 +530,12 @@ void setup()
   // Default selector
   future_selector = 1;
 
-
   DEBUG = 1;
   verbose = 0;
 
-  if (DEBUG) statusUpdate();
-  
-  // pixel runner for tracing.
-  
-  // for (int i = 0; i<pixelsTotal; i++) {
-  //   strip->setPixelColor(i,0xFFFFFF);
-  //   strip->show();
-  //   delay(100);
-  //   strip->setPixelColor(i,0);
-  //   strip->show();
-  // }
+  if (DEBUG) statusUpdate();  
 
+  // traceStrip();
 }
 
 
@@ -653,15 +796,16 @@ void churn() {
         itermax = panelsTotal;
       
         polkadots = 0;
-        // updatePrimary(color(255,0,0)); // red color
+        updatePrimary(color(100,0,255)); // purple color
         // updatePrimary(color(255,120,120)); // peach color
         // updatePrimary(color(255,100,0)); // yellow color        
         // updatePrimary(color(255,90,0)); // wheat color
         // updatePrimary(color(0,255,1)); // hop color
 
-        // updateSecondary(color(255,230,230)); // white color
+        // updatePrimary(color(255,230,230)); // white color
+        // updateSecondary(color(255,0,0)); // red color
         // updateSecondary(color(100,0,255)); // purple color        
-        updateSecondary(color(250,50,0)); // orange color        
+        // updateSecondary(color(250,50,0)); // orange color        
         // updateSecondary(color(1,120,255)); // water color
         // updateSecondary(color(1,1,255)); // blue color
         
@@ -825,7 +969,6 @@ void pour() {
       if (transitioning) {
           new_color = color(new_color,transition_percentage);
           past_color = color(colors_past[i],100-transition_percentage);
-
           new_color = combine(new_color,past_color); 
         
       }
@@ -852,6 +995,18 @@ void q(uint16_t pos, uint32_t c) {
   // flag for overlay / transition.  
     colors[pos] = c;  
   
+}
+
+// pixel runner for tracing.
+void traceStrip() {
+
+  for (int i = 0; i<pixelsTotal; i++) {
+    strip->setPixelColor(i,0xFFFFFF);
+    strip->show();
+    delay(100);
+    strip->setPixelColor(i,0);
+    strip->show();
+  }
 }
 
 // Serial Functions
@@ -956,16 +1111,14 @@ void statusUpdate() {
   Serial.println(F("<=== Creamery Status Update ===>")); 
   Serial.print(F("Selector: "));
   Serial.println(selector); 
+  Serial.print(F("effect_id: "));
+  Serial.println(effect_id); 
   Serial.print(F("Interval: "));
   Serial.println(interval); 
   Serial.print(F("Primary Color: "));
   Serial.println(primary,HEX); 
   Serial.print(F("effectMS: "));
   Serial.println(effectMS);
-  Serial.print(F("Density: "));
-  Serial.println(density);
-  Serial.print(F("Decay: "));
-  Serial.println(decay);
   
   Serial.println("-------");
   Serial.print(F("panelsTotal: "));
@@ -976,7 +1129,6 @@ void statusUpdate() {
 
   Serial.print(F("Free Ram: "));
   Serial.println(freeRam());
-
 
   Serial.print(F("DEBUG: "));
   Serial.println(DEBUG);
@@ -1002,96 +1154,34 @@ void setBrightness(uint8_t b) {
 void toggleDebug() {if (DEBUG){DEBUG = 0;} else {DEBUG=1;}Serial.print(F("Toggling debug:"));Serial.println(DEBUG);}
 void toggleVerbose() {if (verbose){verbose = 0;} else {verbose=1;}}
 
+// http://playground.arduino.cc/Code/CapacitiveSensor
+ uint8_t readCapacitivePin(int pinToMeasure) {
 
- // readCapacitivePin
- // Input: Arduino pin number
- // Output: A number, from 0 to 17 expressing
- // how much capacitance is on the pin
- // When you touch the pin, or whatever you have
- // attached to it, the number will get higher
- // http://playground.arduino.cc/Code/CapacitiveSensor  
- // #include "pins_arduino.h" // Arduino pre-1.0 needs this
-
-// uint8_t readCapacitivePin(int pinToMeasure) {
-//   // Variables used to translate from Arduino to AVR pin naming
-//   volatile uint8_t* port;
-//   volatile uint8_t* ddr;
-//   volatile uint8_t* pin;
-//   // Here we translate the input pin number from
-//   //  Arduino pin number to the AVR PORT, PIN, DDR,
-//   //  and which bit of those registers we care about.
-//   byte bitmask;
-//   port = portOutputRegister(digitalPinToPort(pinToMeasure));
-//   ddr = portModeRegister(digitalPinToPort(pinToMeasure));
-//   bitmask = digitalPinToBitMask(pinToMeasure);
-//   pin = portInputRegister(digitalPinToPort(pinToMeasure));
-//   // Discharge the pin first by setting it low and output
-//   *port &= ~(bitmask);
-//   *ddr  |= bitmask;
-//   delay(1);
-//   // Prevent the timer IRQ from disturbing our measurement
-//   noInterrupts();
-//   // Make the pin an input with the internal pull-up on
-//   *ddr &= ~(bitmask);
-//   *port |= bitmask;
-
-//   // Now see how long the pin to get pulled up. This manual unrolling of the loop
-//   // decreases the number of hardware cycles between each read of the pin,
-//   // thus increasing sensitivity.
-//   uint8_t cycles = 17;
-//        if (*pin & bitmask) { cycles =  0;}
-//   else if (*pin & bitmask) { cycles =  1;}
-//   else if (*pin & bitmask) { cycles =  2;}
-//   else if (*pin & bitmask) { cycles =  3;}
-//   else if (*pin & bitmask) { cycles =  4;}
-//   else if (*pin & bitmask) { cycles =  5;}
-//   else if (*pin & bitmask) { cycles =  6;}
-//   else if (*pin & bitmask) { cycles =  7;}
-//   else if (*pin & bitmask) { cycles =  8;}
-//   else if (*pin & bitmask) { cycles =  9;}
-//   else if (*pin & bitmask) { cycles = 10;}
-//   else if (*pin & bitmask) { cycles = 11;}
-//   else if (*pin & bitmask) { cycles = 12;}
-//   else if (*pin & bitmask) { cycles = 13;}
-//   else if (*pin & bitmask) { cycles = 14;}
-//   else if (*pin & bitmask) { cycles = 15;}
-//   else if (*pin & bitmask) { cycles = 16;}
-
-//   // End of timing-critical section
-//   interrupts();
-
-//   // Discharge the pin again by setting it low and output
-//   //  It's important to leave the pins low if you want to 
-//   //  be able to touch more than 1 sensor at a time - if
-//   //  the sensor is left pulled high, when you touch
-//   //  two sensors, your body will transfer the charge between
-//   //  sensors.
-//   *port &= ~(bitmask);
-//   *ddr  |= bitmask;
-
-//   return cycles;
-// }
-
-
-uint8_t readCapacitivePin(int pinToMeasure) {
   // Variables used to translate from Arduino to AVR pin naming
+
   volatile uint8_t* port;
   volatile uint8_t* ddr;
   volatile uint8_t* pin;
+
   // Here we translate the input pin number from
   //  Arduino pin number to the AVR PORT, PIN, DDR,
   //  and which bit of those registers we care about.
+
   byte bitmask;
   port = portOutputRegister(digitalPinToPort(pinToMeasure));
   ddr = portModeRegister(digitalPinToPort(pinToMeasure));
   bitmask = digitalPinToBitMask(pinToMeasure);
   pin = portInputRegister(digitalPinToPort(pinToMeasure));
+
   // Discharge the pin first by setting it low and output
   *port &= ~(bitmask);
   *ddr  |= bitmask;
   delay(1);
+  uint8_t SREG_old = SREG; //back up the AVR Status Register
+
   // Prevent the timer IRQ from disturbing our measurement
   noInterrupts();
+
   // Make the pin an input with the internal pull-up on
   *ddr &= ~(bitmask);
   *port |= bitmask;
@@ -1099,8 +1189,10 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   // Now see how long the pin to get pulled up. This manual unrolling of the loop
   // decreases the number of hardware cycles between each read of the pin,
   // thus increasing sensitivity.
+
   uint8_t cycles = 17;
-       if (*pin & bitmask) { cycles =  0;}
+
+  if (*pin & bitmask) { cycles =  0;}
   else if (*pin & bitmask) { cycles =  1;}
   else if (*pin & bitmask) { cycles =  2;}
   else if (*pin & bitmask) { cycles =  3;}
@@ -1118,8 +1210,8 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   else if (*pin & bitmask) { cycles = 15;}
   else if (*pin & bitmask) { cycles = 16;}
 
-  // End of timing-critical section
-  interrupts();
+  // End of timing-critical section; turn interrupts back on if they were on before, or leave them off if they were off before
+  SREG = SREG_old;
 
   // Discharge the pin again by setting it low and output
   //  It's important to leave the pins low if you want to 
@@ -1127,10 +1219,12 @@ uint8_t readCapacitivePin(int pinToMeasure) {
   //  the sensor is left pulled high, when you touch
   //  two sensors, your body will transfer the charge between
   //  sensors.
+
   *port &= ~(bitmask);
   *ddr  |= bitmask;
 
   return cycles;
+
 }
 
 /* Helper functions */
@@ -1189,9 +1283,10 @@ uint32_t rgba(byte r, byte g, byte b, int a) {
 
 // Create a 24 bit color value from R,G,B
 uint32_t color(byte r, byte g, byte b, int a) {
-  int rr = r*a;
-  int gg = g*a;
-  int bb = b*a;
+  
+  int rr = (r*a)/100;
+  int gg = (g*a)/100;
+  int bb = (b*a)/100;
 
   return color(rr,gg,bb);
 }
